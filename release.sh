@@ -37,16 +37,20 @@ rm -f "$DMG"
 echo "==> Packing $DMG"
 STAGE=$(mktemp -d)
 ditto build.noindex/Brimtune.app "$STAGE/Brimtune.app"
+# The install guide, from Resources/ReadMe.html.
+textutil -convert rtf Resources/ReadMe.html -output "$STAGE/Read Me.rtf"
 create-dmg \
     --volname "Brimtune" \
     --background Resources/dmg-background.tiff \
     --window-pos 200 120 \
-    --window-size 660 400 \
+    --window-size 660 500 \
     --icon-size 112 \
     --text-size 13 \
-    --icon "Brimtune.app" 165 205 \
+    --icon "Brimtune.app" 165 185 \
     --hide-extension "Brimtune.app" \
-    --app-drop-link 495 205 \
+    --app-drop-link 495 185 \
+    --icon "Read Me.rtf" 330 295 \
+    --hide-extension "Read Me.rtf" \
     --no-internet-enable \
     "$DMG" "$STAGE" >/dev/null
 rm -rf "$STAGE"

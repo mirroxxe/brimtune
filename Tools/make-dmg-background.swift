@@ -1,8 +1,8 @@
-// Renders Resources/dmg-background.tiff: the installer window background (660×400 pt,
+// Renders Resources/dmg-background.tiff: the installer window background (660×440 pt: the content area of a 660×500 window,
 // with a 2× version inside the TIFF). Run: swift Tools/make-dmg-background.swift
 import AppKit
 
-let size = NSSize(width: 660, height: 400)
+let size = NSSize(width: 660, height: 440)
 
 func render(scale: CGFloat) -> NSBitmapImageRep {
     let rep = NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: Int(size.width * scale), pixelsHigh: Int(size.height * scale),
@@ -34,27 +34,28 @@ func render(scale: CGFloat) -> NSBitmapImageRep {
         ]
         (string as NSString).draw(in: NSRect(x: 30, y: y, width: size == 0 ? 0 : 600, height: size * 2.6), withAttributes: attributes)
     }
-    text("Drag Brimtune into Applications", 318, size: 20, weight: .semibold, alpha: 0.95)
+    text("Drag Brimtune into Applications", 352, size: 20, weight: .semibold, alpha: 0.95)
 
-    // Arrow between the app (x 165) and the Applications folder (x 495); icons sit at y 210 from the top.
+    // Arrow between the app (x 165) and the Applications folder (x 495); icons sit at y 185 from the top.
+    // The Read Me sits below the arrow, at y 295 from the top.
     let arrow = NSBezierPath()
-    arrow.move(to: NSPoint(x: 262, y: 190))
-    arrow.line(to: NSPoint(x: 390, y: 190))
+    arrow.move(to: NSPoint(x: 262, y: 253))
+    arrow.line(to: NSPoint(x: 390, y: 253))
     arrow.lineWidth = 3
     arrow.lineCapStyle = .round
     NSColor.white.withAlphaComponent(0.55).setStroke()
     arrow.stroke()
     let head = NSBezierPath()
-    head.move(to: NSPoint(x: 378, y: 201))
-    head.line(to: NSPoint(x: 392, y: 190))
-    head.line(to: NSPoint(x: 378, y: 179))
+    head.move(to: NSPoint(x: 378, y: 264))
+    head.line(to: NSPoint(x: 392, y: 253))
+    head.line(to: NSPoint(x: 378, y: 242))
     head.lineWidth = 3
     head.lineCapStyle = .round
     head.lineJoinStyle = .round
     head.stroke()
 
-    text("First open: if macOS says it can't verify Brimtune, go to", 44, size: 11.5, weight: .regular, alpha: 0.55)
-    text("System Settings → Privacy & Security → Open Anyway.", 26, size: 11.5, weight: .medium, alpha: 0.7)
+    text("First open: if macOS says it can't verify Brimtune, go to System Settings →", 22, size: 11.5, weight: .regular, alpha: 0.55)
+    text("Privacy & Security → Open Anyway. Read Me explains every step and permission.", 5, size: 11.5, weight: .medium, alpha: 0.7)
 
     NSGraphicsContext.restoreGraphicsState()
     return rep

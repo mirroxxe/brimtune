@@ -1,0 +1,80 @@
+<!doctype html>
+<!-- The "Read Me" in the DMG. release.sh turns it into Read Me.rtf with textutil, so keep to
+     simple tags: headings, paragraphs, lists, bold and italics. -->
+<html>
+<head><meta charset="utf-8"><title>Read Me</title></head>
+<body style="font-family: -apple-system, 'Helvetica Neue', sans-serif; font-size: 13px; line-height: 1.45;">
+
+<h1 style="font-size: 24px;">Brimtune</h1>
+<p>Your notch, playing along. Thanks for trying Brimtune! This page walks you through installing it, opening it the first time, and the permissions it asks for. It takes about a minute.</p>
+<p><b>Needs:</b> macOS 14 Sonoma or later, on Apple silicon or Intel. A notch is not required: on Macs and displays without one, a small island floats at the top of the screen.</p>
+
+<h2 style="font-size: 17px;">1. Install</h2>
+<ol>
+<li>Drag <b>Brimtune</b> onto the <b>Applications</b> folder in this window.</li>
+<li>Eject this disk (the ⏏ button next to “Brimtune” in Finder's sidebar). You can delete the downloaded Brimtune.dmg afterwards.</li>
+<li>Open Brimtune from Applications or Launchpad. Always run it from Applications, not from this window: otherwise updates and permissions won't stick.</li>
+</ol>
+
+<h2 style="font-size: 17px;">2. The first time you open it</h2>
+<p>Brimtune is free and is signed by its maker rather than through Apple's paid developer programme, so the first time macOS shows a warning such as <i>“Apple could not verify ‘Brimtune’ is free of malware”</i> or <i>“Brimtune can't be opened”</i>. This happens once:</p>
+<ol>
+<li>Click <b>Done</b> (or <b>OK</b>) in that message.</li>
+<li>Open <b>System Settings → Privacy &amp; Security</b>.</li>
+<li>Scroll down to <b>Security</b>. Next to <i>“Brimtune” was blocked to protect your Mac</i>, click <b>Open Anyway</b>.</li>
+<li>Confirm with your password or Touch ID, then click <b>Open Anyway</b> once more.</li>
+</ol>
+<p>From then on Brimtune opens like any other app, and updates keep working without this step.</p>
+<p><b>If macOS says Brimtune “is damaged and can't be opened”</b>, the download was quarantined more strictly than usual. Open Terminal and run:</p>
+<p style="font-family: Menlo, monospace; font-size: 12px;">xattr -dr com.apple.quarantine /Applications/Brimtune.app</p>
+<p>Then open Brimtune again.</p>
+
+<h2 style="font-size: 17px;">3. Permissions</h2>
+<p>A setup guide opens on first launch and asks for each permission in turn, explaining what it's for. Only the first group is needed for music; everything else is optional and can be changed later in Brimtune's Settings or in System Settings → Privacy &amp; Security.</p>
+
+<h3 style="font-size: 14px;">For your music</h3>
+<ul>
+<li><b>Music and Spotify apps.</b> The first time they play, macOS asks whether Brimtune may control them. Click <b>Allow</b>. This lets Brimtune see what's playing and send play, pause and skip. <i>(System Settings → Privacy &amp; Security → Automation.)</i></li>
+<li><b>Safari or Chrome</b>, for YouTube Music and Spotify on the web. Allow Brimtune to control your browser when asked (also under Automation).</li>
+<li><b>Covers, progress, Up Next and playlists from the browser</b> need one switch in the browser itself:
+  <ul>
+  <li><b>Safari:</b> Safari → Settings → Advanced → turn on <i>Show features for web developers</i>. Then open the new <b>Developer</b> tab and turn on <i>Allow JavaScript from Apple Events</i>.</li>
+  <li><b>Chrome:</b> View → Developer → <i>Allow JavaScript from Apple Events</i>.</li>
+  </ul></li>
+</ul>
+<p>Without that switch Brimtune still shows the song's title and finds a cover by itself, and the controls keep working.</p>
+
+<h3 style="font-size: 14px;">Optional extras</h3>
+<ul>
+<li><b>Waveform that follows the music</b>: <i>System Audio Recording</i> (Privacy &amp; Security → Screen &amp; System Audio Recording). Brimtune only measures loudness in memory. Nothing is recorded, saved or sent anywhere.</li>
+<li><b>Upcoming meetings</b>: <i>Calendars</i>. Shows a countdown five minutes before a meeting, with a Join button.</li>
+<li><b>AirPods battery</b>: <i>Bluetooth</i>. Shows the battery level when your headphones connect.</li>
+<li><b>Open at login</b>: adds Brimtune to <i>Login Items</i> so it starts with your Mac.</li>
+</ul>
+<p>If you clicked <b>Don't Allow</b> by mistake, turn the permission on in System Settings → Privacy &amp; Security, then quit and reopen Brimtune. You can reopen the setup guide at any time from the menu bar icon → <b>Setup Guide</b>.</p>
+
+<h2 style="font-size: 17px;">4. Using it</h2>
+<ul>
+<li>Brimtune has no Dock icon. It lives in the notch and in the menu bar (a tiny island icon).</li>
+<li>Hover the notch to open the player, search and your playlists. Click the cover for the full-screen player with lyrics.</li>
+<li>Lock your Mac to see the player and lyrics on the lock screen.</li>
+<li>Timers, the stopwatch, your listening history, Settings and <b>Check for Updates</b> are in the menu bar icon.</li>
+</ul>
+
+<h2 style="font-size: 17px;">5. Something not working?</h2>
+<ul>
+<li><b>Nothing appears in the notch:</b> play something first; the island stays quiet when nothing is playing. Check that Brimtune is running (its menu bar icon is there).</li>
+<li><b>A browser tab isn't picked up:</b> Brimtune follows music.youtube.com and open.spotify.com in Safari and Chrome. Check the Automation permission and the <i>Allow JavaScript from Apple Events</i> switch above.</li>
+<li><b>No lyrics:</b> not every song has synced lyrics. If they run early or late, click the line being sung in the full-screen player.</li>
+<li><b>Permissions stopped working after moving the app:</b> keep Brimtune in Applications, then quit and reopen it.</li>
+</ul>
+
+<h2 style="font-size: 17px;">Updates and removal</h2>
+<p>Updates download on their own and keep your permissions; you can also check from the menu bar icon. To remove Brimtune, choose <b>Quit Brimtune</b> from its menu bar icon and drag it from Applications to the Bin. To remove its history too, delete the folder <i>Library/Application Support/Brimtune</i> in your home folder.</p>
+
+<h2 style="font-size: 17px;">Privacy and help</h2>
+<p>No account, no ads, no tracking. Nothing leaves your Mac except the song details needed to find lyrics and covers. Details: brimtune.pages.dev/privacy</p>
+<p>Questions or problems: <b>brimtune.support@gmail.com</b><br>Website: <b>brimtune.pages.dev</b></p>
+<p><i>Made in Ukraine by Volodymyr Chuchman.</i></p>
+</body>
+</html>

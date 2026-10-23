@@ -254,10 +254,28 @@ p { margin: 0 0 1rem; }
   background: var(--night); color: var(--moon);
   box-shadow: 0 0 0 calc(var(--bezel) * 1px) #0B0A12, 0 60px 110px -50px rgba(22, 18, 31, calc(var(--bezel) / 20));
 }
+/* A record, spinning slowly: the grooves look the same at any angle, so only the label turns,
+   and the light on the vinyl stays put. The label takes the current cover's colours. */
 .hero-art {
-  position: absolute; right: 7vw; top: 15vh; width: min(32vw, 52vh); height: auto; aspect-ratio: 1; border-radius: 4px;
-  transform: rotate(-4deg); box-shadow: 0 60px 120px -40px rgba(0, 0, 0, .8), inset 0 0 0 1px rgba(255, 255, 255, .12);
+  position: absolute; right: 6vw; top: 13vh; width: min(36vw, 60vh); aspect-ratio: 1; border-radius: 50%;
+  display: grid; place-items: center;
+  background: repeating-radial-gradient(circle, #0b0a0f 0 1.5px, #19171f 1.5px 3px);
+  box-shadow: 0 60px 120px -40px rgba(0, 0, 0, .85), 0 0 0 1px rgba(255, 255, 255, .08), inset 0 0 0 .6vw #08070b;
 }
+.hero-art::after {
+  content: ""; position: absolute; inset: 0; border-radius: 50%; pointer-events: none;
+  background: conic-gradient(from 20deg, transparent 0 6%, rgba(255, 255, 255, .16) 11%, transparent 17% 50%, rgba(255, 255, 255, .12) 61%, transparent 67%);
+}
+.record-label {
+  position: relative; width: 36%; aspect-ratio: 1; border-radius: 50%;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .3em;
+  background: radial-gradient(circle at 30% 25%, color-mix(in srgb, var(--a3) 80%, white), transparent 55%), linear-gradient(140deg, var(--a1), var(--a2));
+  color: #fff; font-size: clamp(.55rem, 1.1vw, 1rem); animation: spin 9s linear infinite;
+}
+.record-label::before { content: ""; position: absolute; width: 7%; aspect-ratio: 1; border-radius: 50%; background: var(--night); }
+.record-label b { font: 800 1.5em/1 var(--display); letter-spacing: -.03em; transform: translateY(-1.1em); }
+.record-label i { font: 300 .8em/1 var(--display); font-style: italic; opacity: .85; transform: translateY(1.3em); }
+@keyframes spin { to { transform: rotate(360deg); } }
 .hero-copy { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: flex-end; padding: 0 var(--gutter) 7vh; }
 .kicker { font: 500 .95rem/1 var(--text); color: color-mix(in srgb, var(--moon) 75%, transparent); margin-bottom: 1.4rem; }
 .hero h1 {
@@ -600,7 +618,7 @@ p { margin: 0 0 1rem; }
   .island[data-state="search"] { --w: 330px; }
   .island[data-state="playlists"] { --w: 330px; --h: 266px; }
   .controls { gap: 18px; }
-  .hero-art { width: 46vw; right: -6vw; top: 14vh; }
+  .hero-art { width: 58vw; right: -14vw; top: 13vh; }
   .hero-copy { padding-bottom: 5vh; }
   .hero-row { margin-top: 1.6rem; gap: 1.5rem; }
   .lede { font-size: 1.05rem; }

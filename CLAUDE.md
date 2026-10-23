@@ -54,7 +54,9 @@ wallpaper, music-video clip player, volume HUD.
 - Code signing: self-signed **"Brimtune Developer"** certificate in the login keychain (10 yrs).
 - Updates: Sparkle EdDSA private key in the login keychain; public key in `Resources/Info.plist`.
 - Neither key is backed up yet (user postponed). Losing them breaks updates for installed copies.
-- DMG background: `Tools/make-dmg-background.swift`; icon: `Tools/make-icon.swift`.
+- DMG background: `Tools/make-dmg-background.swift` (660×440, the visible part of a 660×500
+  window); icon: `Tools/make-icon.swift`. The DMG also carries `Read Me.rtf`, made by `release.sh`
+  from `Resources/ReadMe.html` (install steps, Open Anyway, every permission, troubleshooting).
 - Legal texts: `Legal/` (privacy, terms — Ukrainian law, third-party notices); `[DATE]` is filled
   in when the site is built.
 
