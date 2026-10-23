@@ -1,0 +1,85 @@
+# Brimtune — project context
+
+Brimtune is a free macOS app (SwiftUI + AppKit, macOS 14+, Apple silicon and Intel) that turns
+the MacBook notch into a Dynamic Island–style "island" for music and small live moments, plus a
+player on the lock screen and a full-screen player. Previously named **Isle** (bundle id
+`app.isle.nowplaying`); now **Brimtune**, bundle id `app.brimtune.mac`. Made in Ukraine by
+Volodymyr Chuchman. The user speaks Ukrainian: reply in Ukrainian; code, UI and site are English.
+
+- Repo: `~/Brimtune`, private GitHub `mirroxxe/brimtune` (gh CLI is logged in as `mirroxxe`).
+- Support email: brimtune.support@gmail.com. Site (not yet published): https://brimtune.pages.dev
+- Free distribution, no Apple Developer Program: signed with a self-signed certificate.
+
+## Commands
+
+```sh
+./build.sh             # universal build → build.noindex/Brimtune.app (Spotlight-hidden)
+./build.sh --install   # …and replace /Applications/Brimtune.app, relaunch
+./release.sh 1.0.1     # bump version, build, DMG, Sparkle appcast → dist.noindex/
+./deploy.sh --preview  # build site → public.noindex/, serve http://localhost:8899
+./deploy.sh            # publish to Cloudflare Pages (needs `npx wrangler login` once)
+```
+
+Always install with `./build.sh --install` (never copy a second Brimtune.app anywhere Spotlight
+indexes — the user saw duplicates). Commit + push after each finished change; end commit
+messages with `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`.
+
+## App architecture (`Sources/Brimtune`)
+
+- `App/` — `AppDelegate` (menu bar icon = drawn mini island, menus: timers, stopwatch, history,
+  full-screen player, preview lock screen, Check for Updates, Setup Guide, About), `Preferences`,
+  `SettingsView`, `HistoryView`, `Onboarding` (4-page dark setup guide with live permission
+  status), `Updater` (Sparkle 2.10.0, feed `https://brimtune.pages.dev/appcast.xml`).
+- `NowPlaying/` — `NowPlayingCenter` merges sources; `BrowserSource` (Safari/Chrome tabs on
+  music.youtube.com / open.spotify.com via AppleScript + JS; needs Safari "Allow JavaScript from
+  Apple Events"; title-only fallback uses iTunes Search for covers and a local song clock),
+  `ScriptableSource` (Music/Spotify apps), `MediaRemoteSource` (reading blocked on macOS 15.4+,
+  sending commands still works). YouTube Music playback is switched in-page via the `yt-navigate`
+  event — never by setting the tab URL (that triggers Safari's "Leave page?" dialog).
+- `Island/` — one `IslandController` per display (notch shape on built-in, floating pill on
+  external); modes hidden/idle/compact/peek/alert/expanded; expanded height is measured;
+  search field, Up Next (collapsible), playlist shelf + song list.
+- `Stage/` — full-screen player and lock-screen panels (`LockScreenSpace` puts windows in a
+  SkyLight space at level 400 to show above the lock screen); tabs Lyrics / Up Next / Playlists;
+  word-by-word karaoke with ±0.5 s nudges; breathing mesh background.
+- `Services/` — AudioMonitor, AudioLevels (Core Audio process tap → live waveform),
+  ActivityCenter (timer, stopwatch, EventKit meetings), LyricsService (LRCLIB), MusicSearch
+  (scrapes youtube.com results), HistoryStore, LockScreen.
+
+Measured cost: ~1.5% CPU, 36 MB with music paused. Removed on request: blurred cover as
+wallpaper, music-video clip player, volume HUD.
+
+## Signing & release
+
+- Code signing: self-signed **"Brimtune Developer"** certificate in the login keychain (10 yrs).
+- Updates: Sparkle EdDSA private key in the login keychain; public key in `Resources/Info.plist`.
+- Neither key is backed up yet (user postponed). Losing them breaks updates for installed copies.
+- DMG background: `Tools/make-dmg-background.swift`; icon: `Tools/make-icon.swift`.
+- Legal texts: `Legal/` (privacy, terms — Ukrainian law, third-party notices); `[DATE]` is filled
+  in when the site is built.
+
+## Website (`site/`)
+
+Static HTML/CSS/JS, no framework. `index.html`, `styles.css`, `island.js` (live demo island fixed
+at the top: hover opens the player, scroll switches small states, made-up tracks recolour the
+page), `build-pages.mjs` + `doc-template.html` render privacy/terms/licenses/changelog.
+Fonts: Bricolage Grotesque (display) + Geist (text). Colours: night #0E0B18, lilac paper #F1EEF6,
+ink #16121F, accents rose #F2648E, iris #7C6CF2, amber #FFAE57. Use made-up songs/covers/lyrics
+only (no real copyrighted ones).
+
+### Next task: redesign the site again
+
+The user found the current version (Canopy-like structure, commit 9fc7cc1) "empty". New
+reference: **https://recent.design/i/erz4438-augen** (the site augen.pro): minimal and clean,
+white, a huge full-bleed hero visual, very large type, long scrolling, smooth scroll (Lenis) and
+scroll-driven animations (GSAP). Keep Canopy's section order (hero → lock screen → quiet by
+design → the rest of the features → the idea → install → FAQ → closing) and show most features,
+but make it fuller and richer, with smooth scroll-linked animation. Make it Brimtune's own, not a
+copy. Check it on desktop (1440×900) and phone (375×812) in the browser before committing.
+
+## Remaining release plan
+
+1. Redesign the site (above). 2. User creates a free Cloudflare account → `npx wrangler login`
+→ `./release.sh` (if the app changed) → `./deploy.sh`. 3. Test on a fresh macOS user account.
+4. Screen recordings for the site. 5. Launch: Product Hunt, r/macapps, X/Threads, UA Telegram.
+6. Back up both signing keys.
