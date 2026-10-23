@@ -118,6 +118,11 @@ final class IslandController {
         didSet { if suppressed != oldValue { update() } }
     }
 
+    /// Set while an app is full screen on this island's display.
+    var fullScreenHidden = false {
+        didSet { if fullScreenHidden != oldValue { update() } }
+    }
+
     var onOpenStage: (() -> Void)?
     var onOpenSettings: (() -> Void)?
 
@@ -296,7 +301,7 @@ final class IslandController {
     }
 
     private func resolveMode() -> IslandMode {
-        guard preferences.islandEnabled, !suppressed else { return .hidden }
+        guard preferences.islandEnabled, !suppressed, !fullScreenHidden else { return .hidden }
         if hovering || pinnedOpen { return .expanded }
         if model.alert != nil { return .alert }
         if peeking, center.track != nil { return .peek }

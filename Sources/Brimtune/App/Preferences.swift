@@ -27,6 +27,7 @@ final class Preferences: ObservableObject {
     @Published var calendarEnabled: Bool { didSet { defaults.set(calendarEnabled, forKey: "calendarEnabled") } }
     @Published var liveWaveform: Bool { didSet { defaults.set(liveWaveform, forKey: "liveWaveform") } }
     @Published var externalDisplays: Bool { didSet { defaults.set(externalDisplays, forKey: "externalDisplays") } }
+    @Published var hideInFullScreen: Bool { didSet { defaults.set(hideInFullScreen, forKey: "hideInFullScreen") } }
 
     /// The app used to be called Isle (bundle id app.isle.nowplaying). Bring its
     /// settings and history along once, so the rename costs the user nothing.
@@ -72,6 +73,7 @@ final class Preferences: ObservableObject {
             "calendarEnabled": true,
             "liveWaveform": true,
             "externalDisplays": true,
+            "hideInFullScreen": true,
         ])
         islandEnabled = defaults.bool(forKey: "islandEnabled")
         expandOnHover = defaults.bool(forKey: "expandOnHover")
@@ -83,6 +85,7 @@ final class Preferences: ObservableObject {
         calendarEnabled = defaults.bool(forKey: "calendarEnabled")
         liveWaveform = defaults.bool(forKey: "liveWaveform")
         externalDisplays = defaults.bool(forKey: "externalDisplays")
+        hideInFullScreen = defaults.bool(forKey: "hideInFullScreen")
         launchAtLogin = SMAppService.mainApp.status == .enabled
         // On by default: turned on once on first run; after that the Settings toggle decides.
         if !defaults.bool(forKey: "launchAtLoginConfigured") {

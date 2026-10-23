@@ -12,6 +12,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var history: HistoryStore!
     private var islands: [IslandController] = []
     private var stage: StageController!
+    private var fullScreen: FullScreenMonitor!
     private var lockScreen: LockScreenController!
     private var statusItem: NSStatusItem!
     private var settingsWindow: NSWindow?
@@ -35,6 +36,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         stage.onSettings = { [weak self] in self?.showSettings() }
         stage.onHistory = { [weak self] in self?.showHistory() }
         stage.onVisibilityChange = { [weak self] shown in self?.islands.forEach { $0.suppressed = shown } }
+
+        // Full-screen videos, games and apps get the display to themselves.
+        fullScreen = FullScreenMonitor()
+        fullScreen.$fullScreenFrames.combineLatest(preferences.$hideInFullScreen)
+            .receive(on: RunLoop.main)
+            // @Published sends the new value before the property holds it, so use the values sent.
+            .sink { [weak self] frames, hide in self?.applyFullScreen(hide ? frames : []) }
+            .store(in: &cancellables)
 
         onboarding = OnboardingController(center: center, activities: activities, preferences: preferences)
         onboarding.showIfNeeded()
@@ -103,6 +112,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             island.suppressed = stage.isShown
             return island
         }
+        applyFullScreen(preferences.hideInFullScreen ? fullScreen.fullScreenFrames : [])
+    }
+
+    private func applyFullScreen(_ frames: [CGRect]) {
+        islands.forEach { $0.fullScreenHidden = frames.contains($0.screen.frame) }
     }
 
     // Rebuilt on open so the title and play state are current.

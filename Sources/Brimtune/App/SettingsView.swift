@@ -15,6 +15,8 @@ struct SettingsView: View {
                 Toggle("Waveform follows the music", isOn: $preferences.liveWaveform)
                     .help("Listens to what your Mac plays (macOS asks once). Audio is analysed in memory and never saved.")
                 Toggle("Island on external displays", isOn: $preferences.externalDisplays)
+                Toggle("Hide while an app is full screen", isOn: $preferences.hideInFullScreen)
+                    .help("Steps out of the way of full-screen videos, games and apps on that display.")
                 Toggle("Upcoming meetings from Calendar", isOn: $preferences.calendarEnabled)
             }
             Section {
