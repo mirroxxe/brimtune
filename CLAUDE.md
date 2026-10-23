@@ -7,7 +7,7 @@ player on the lock screen and a full-screen player. Previously named **Isle** (b
 Volodymyr Chuchman. The user speaks Ukrainian: reply in Ukrainian; code, UI and site are English.
 
 - Repo: `~/Brimtune`, private GitHub `mirroxxe/brimtune` (gh CLI is logged in as `mirroxxe`).
-- Support email: brimtune.support@gmail.com. Site (not yet published): https://brimtune.pages.dev
+- Support email: brimtune.support@gmail.com. Site (live since 2026-10-23): https://brimtune.pages.dev
 - Free distribution, no Apple Developer Program: signed with a self-signed certificate.
 
 ## Commands
@@ -17,7 +17,7 @@ Volodymyr Chuchman. The user speaks Ukrainian: reply in Ukrainian; code, UI and 
 ./build.sh --install   # …and replace /Applications/Brimtune.app, relaunch
 ./release.sh 1.0.1     # bump version, build, DMG, Sparkle appcast → dist.noindex/
 ./deploy.sh --preview  # build site → public.noindex/, serve http://localhost:8899
-./deploy.sh            # publish to Cloudflare Pages (needs `npx wrangler login` once)
+./deploy.sh            # publish to Cloudflare Pages (wrangler is logged in on this Mac)
 ```
 
 Always install with `./build.sh --install` (never copy a second Brimtune.app anywhere Spotlight
@@ -83,7 +83,8 @@ closing with a giant wordmark. Checked at 1440×900 and 375×812.
 
 ## Remaining release plan
 
-1. ~~Redesign the site~~ (done). 2. User creates a free Cloudflare account → `npx wrangler login`
-→ `./release.sh` (if the app changed) → `./deploy.sh`. 3. Test on a fresh macOS user account.
+1. ~~Redesign the site~~ (done). 2. ~~Publish~~ (done 2026-10-23: the Pages project `brimtune` was
+created on classic Pages with `--force`, since new wrangler tries to delegate Pages to Workers;
+plain `./deploy.sh` works from now on, no `--force`). 3. Test on a fresh macOS user account.
 4. Screen recordings for the site. 5. Launch: Product Hunt, r/macapps, X/Threads, UA Telegram.
 6. Back up both signing keys.
