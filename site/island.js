@@ -92,64 +92,69 @@
 
   // Whatever crosses the middle of the screen decides what the island shows.
   const watched = document.querySelectorAll("[data-island]");
-  const moments = document.querySelectorAll(".moments li");
   const observer = new IntersectionObserver((entries) => {
     for (const entry of entries) {
       if (!entry.isIntersecting) continue;
       sectionState = entry.target.dataset.island;
-      moments.forEach((li) => li.classList.toggle("active", li === entry.target));
       if (sectionState === "timer") timerLeft = 25 * 60;
       render();
     }
   }, { rootMargin: "-48% 0px -48% 0px" });
   watched.forEach((el) => observer.observe(el));
 
-  // Timer view counts down for real.
+  // Timers count down for real, in the island and in the timer tile.
   let timerLeft = 25 * 60;
-  const countdown = island.querySelector(".countdown");
+  const countdowns = document.querySelectorAll(".countdown");
 
-  // Lyrics: each word lights up in turn; the island echoes the current line.
-  const karaoke = document.getElementById("karaoke");
-  const lines = [...karaoke.querySelectorAll("[data-line]")];
+  // Lyrics: every karaoke block lights its words in turn, on one shared clock;
+  // the island echoes the current line.
   const islandLine = island.querySelector(".island-line");
-  const words = lines.map((line) => {
-    const parts = line.textContent.trim().split(/\s+/);
-    line.textContent = "";
-    return parts.map((word, i) => {
-      const span = document.createElement("span");
-      span.className = "w";
-      span.textContent = word;
-      line.append(span, i < parts.length - 1 ? " " : "");
-      return span;
+  const blocks = [...document.querySelectorAll("[data-karaoke]")].map((block) => {
+    const lines = [...block.querySelectorAll("[data-line]")];
+    const words = lines.map((line) => {
+      const parts = line.textContent.trim().split(/\s+/);
+      line.textContent = "";
+      return parts.map((word, i) => {
+        const span = document.createElement("span");
+        span.className = "w";
+        span.textContent = word;
+        line.append(span, i < parts.length - 1 ? " " : "");
+        return span;
+      });
     });
+    const entry = { block, lines, words, visible: false };
+    new IntersectionObserver(([e]) => { entry.visible = e.isIntersecting; }).observe(block);
+    return entry;
   });
   const wordTime = 0.42;
   const lineGap = 0.7;
-  const lineLength = (i) => words[i].length * wordTime + lineGap;
-  const cycle = lines.reduce((sum, _, i) => sum + lineLength(i), 0);
   let lyricClock = 0;
 
   function paintLyrics() {
-    if (reducedMotion) {
-      words.flat().forEach((w) => w.style.setProperty("--p", 1));
-      return;
-    }
-    let t = lyricClock % cycle;
-    let current = 0;
-    while (t > lineLength(current)) { t -= lineLength(current); current += 1; }
-    lines.forEach((line, i) => {
-      line.classList.toggle("past", i < current);
-      line.classList.toggle("future", i > current);
-      words[i].forEach((w, k) => {
-        const p = i < current ? 1 : i > current ? 0 : Math.min(Math.max((t - k * wordTime) / wordTime, 0), 1);
-        w.style.setProperty("--p", p.toFixed(3));
+    for (const { lines, words, visible } of blocks) {
+      if (reducedMotion) { words.flat().forEach((w) => w.style.setProperty("--p", 1)); continue; }
+      // Off-screen blocks rest, except the one the island is echoing.
+      const echoed = lines === blocks[0].lines && sectionState === "lyric";
+      if (!visible && !echoed) continue;
+      const lineLength = (i) => words[i].length * wordTime + lineGap;
+      const cycle = lines.reduce((sum, _, i) => sum + lineLength(i), 0);
+      let t = lyricClock % cycle;
+      let current = 0;
+      while (t > lineLength(current)) { t -= lineLength(current); current += 1; }
+      lines.forEach((line, i) => {
+        line.classList.toggle("future", i > current);
+        words[i].forEach((w, k) => {
+          const p = i < current ? 1 : i > current ? 0 : Math.min(Math.max((t - k * wordTime) / wordTime, 0), 1);
+          w.style.setProperty("--p", p.toFixed(3));
+        });
       });
-    });
-    if (islandLine.textContent !== lines[current].textContent) islandLine.textContent = lines[current].textContent;
+      if (blocks[0].lines === lines && islandLine.textContent !== lines[current].textContent) {
+        islandLine.textContent = lines[current].textContent;
+      }
+    }
   }
 
-  let lyricsVisible = false;
-  new IntersectionObserver(([entry]) => { lyricsVisible = entry.isIntersecting; }).observe(karaoke);
+  const lyricsVisible = () => blocks.some((b) => b.visible);
 
   // One clock drives everything that moves.
   let last = performance.now();
@@ -160,12 +165,10 @@
     if (playing) {
       position = Math.min(position + dt, tracks[trackIndex].length);
       updateProgress();
-      if (lyricsVisible || sectionState === "lyric") lyricClock += dt;
+      if (lyricsVisible() || sectionState === "lyric") lyricClock += dt;
     }
-    if (sectionState === "timer") {
-      timerLeft = Math.max(timerLeft - dt, 0);
-      countdown.textContent = clock(timerLeft);
-    }
+    timerLeft = timerLeft > 0 ? timerLeft - dt : 25 * 60;
+    countdowns.forEach((el) => (el.textContent = clock(timerLeft)));
     // While the hero and the player chapter are on screen, play through the "album".
     sinceTrack += dt;
     if (!reducedMotion && playing && !hovering && sinceTrack > 9 && ["compact", "expanded"].includes(sectionState)) {
