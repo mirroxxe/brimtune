@@ -436,7 +436,7 @@ final class BrowserSource: NowPlayingSource {
           app.dispatchEvent(new CustomEvent('yt-navigate', { bubbles: true, composed: true,
             detail: { endpoint: { watchEndpoint: { \(fields) } } } }));
         })()
-        """, in: tab)
+        """.inPage(for: browser), in: tab)
     }
 
     private static let youTubePlaylistsJS = """
@@ -472,11 +472,9 @@ final class BrowserSource: NowPlayingSource {
     /// Reads the playlists listed in the followed tab's sidebar.
     func fetchPlaylists(completion: @escaping ([Playlist]) -> Void) {
         guard let tab = musicTab ?? activeTab, tab.pageAccess else { return completion([]) }
-        let js = tab.site == .youtubeMusic ? Self.youTubePlaylistsJS : Self.spotifyPlaylistsJS
-        let escaped = js.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "\"", with: "\\\"")
-            .replacingOccurrences(of: "\n", with: " ")
+        let js = tab.site == .youtubeMusic ? inPage(Self.youTubePlaylistsJS) : Self.spotifyPlaylistsJS
         let source = """
-        set js to "\(escaped)"
+        set js to "\(Self.appleScriptString(js))"
         tell application id "\(browser.bundleID)"
             set t to tab \(tab.index) of window id \(tab.window)
             return \(browser.runJS)
@@ -527,14 +525,14 @@ final class BrowserSource: NowPlayingSource {
           return 'started';
         })()
         """
-        run(start, in: tab)
+        run(inPage(start), in: tab)
         poll(key: key, tab: tab, attempts: 20, completion: completion)
     }
 
     private func poll(key: String, tab: Tab, attempts: Int, completion: @escaping ([PlaylistSong]) -> Void) {
         guard attempts > 0 else { return completion([]) }
         let source = """
-        set js to "(window.__brimtuneSongs && window.__brimtuneSongs['\(key)']) || ''"
+        set js to "\(Self.appleScriptString(inPage("(window.__brimtuneSongs && window.__brimtuneSongs['\(key)']) || ''")))"
         tell application id "\(browser.bundleID)"
             set t to tab \(tab.index) of window id \(tab.window)
             return \(browser.runJS)
@@ -658,13 +656,24 @@ final class BrowserSource: NowPlayingSource {
         "document.querySelector('[data-testid=\"\(id)\"]').click()"
     }
 
-    private func run(_ js: String, in tab: Tab) {
-        let escaped = js
-            .replacingOccurrences(of: "\\", with: "\\\\")
+    /// Chrome runs AppleScript's JavaScript in an isolated world: it sees the page's DOM but
+    /// not its own objects, such as YouTube Music's app data and network client. Code that
+    /// needs them is slipped into the page as a script tag carrying the page's nonce, and
+    /// hands its result back through an attribute on <html>. Safari already runs in the page.
+    private func inPage(_ js: String) -> String {
+        js.inPage(for: browser)
+    }
+
+    /// `js` as the body of an AppleScript string literal, on one line.
+    private static func appleScriptString(_ js: String) -> String {
+        js.replacingOccurrences(of: "\\", with: "\\\\")
             .replacingOccurrences(of: "\"", with: "\\\"")
             .replacingOccurrences(of: "\n", with: " ")
+    }
+
+    private func run(_ js: String, in tab: Tab) {
         let source = """
-        set js to "\(escaped)"
+        set js to "\(Self.appleScriptString(js))"
         tell application id "\(browser.bundleID)"
             set t to tab \(tab.index) of window id \(tab.window)
             \(browser.runJS)
@@ -683,5 +692,37 @@ final class BrowserSource: NowPlayingSource {
         script?.compileAndReturnError(&error)
         if let error { NSLog("Brimtune: browser script failed to compile: %@", error) }
         return error == nil ? script : nil
+    }
+}
+
+private extension String {
+    /// This expression, evaluated in the page's own JavaScript world (see `BrowserSource.inPage`).
+    func inPage(for browser: BrowserSource.Browser) -> String {
+        guard browser == .chrome else { return self }
+        let body = "document.documentElement.setAttribute('data-brimtune-out', String((function(){ try { return \(self) } catch (e) { return '' } })()))"
+        // A JSON string is a valid JavaScript string literal.
+        let data = try! JSONSerialization.data(withJSONObject: [body])
+        let literal = String(decoding: data, as: UTF8.self).dropFirst().dropLast()
+        // YouTube Music only accepts script text that went through a Trusted Types policy.
+        // No `//` comments inside: the script is sent to the browser as a single line.
+        return """
+        (function(){
+          var root = document.documentElement, s = document.createElement('script'), n = document.querySelector('script[nonce]');
+          if (n) s.nonce = n.nonce || n.getAttribute('nonce');
+          var text = \(literal);
+          if (window.trustedTypes && trustedTypes.createPolicy) {
+            try {
+              window.__brimtunePolicy = window.__brimtunePolicy
+                || trustedTypes.createPolicy('brimtune-' + Math.random().toString(36).slice(2), { createScript: function(x){ return x } });
+              text = window.__brimtunePolicy.createScript(text);
+            } catch (e) {}
+          }
+          s.textContent = text;
+          root.appendChild(s); s.remove();
+          var out = root.getAttribute('data-brimtune-out');
+          root.removeAttribute('data-brimtune-out');
+          return out || '';
+        })()
+        """
     }
 }
