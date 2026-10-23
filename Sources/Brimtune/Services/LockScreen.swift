@@ -9,11 +9,11 @@ final class LockMonitor: ObservableObject {
     init() {
         let center = DistributedNotificationCenter.default()
         center.addObserver(forName: .init("com.apple.screenIsLocked"), object: nil, queue: .main) { [weak self] _ in
-            NSLog("Brimtune: screen locked")
+            brimtuneLog("screen locked")
             MainActor.assumeIsolated { self?.isLocked = true }
         }
         center.addObserver(forName: .init("com.apple.screenIsUnlocked"), object: nil, queue: .main) { [weak self] _ in
-            NSLog("Brimtune: screen unlocked")
+            brimtuneLog("screen unlocked")
             MainActor.assumeIsolated { self?.isLocked = false }
         }
     }
@@ -50,11 +50,11 @@ enum LockScreenSpace {
     @discardableResult
     static func adopt(_ window: NSWindow) -> Bool {
         guard let api, window.windowNumber > 0 else {
-            NSLog("Brimtune: lock-screen space unavailable")
+            brimtuneLog("lock-screen space unavailable")
             return false
         }
         let ok = api.add(api.connection, api.space, [window.windowNumber] as CFArray, 7) == 0
-        if !ok { NSLog("Brimtune: could not move window %d to lock-screen space", window.windowNumber) }
+        if !ok { brimtuneLog("could not move window %d to lock-screen space", window.windowNumber) }
         return ok
     }
 }

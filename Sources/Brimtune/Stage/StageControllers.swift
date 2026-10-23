@@ -191,7 +191,7 @@ final class LockScreenController {
         guard presentation.isVisible != visible else { return }
         if visible { presentation.show() } else { presentation.hide() }
         panel.ignoresMouseEvents = !visible
-        NSLog("Brimtune: lock-screen player %@", visible ? "shown" : "hidden")
+        brimtuneLog("lock-screen player %@", visible ? "shown" : "hidden")
         if visible {
             // The SwiftUI content animates itself in; the window just has to be there.
             panel.alphaValue = 1

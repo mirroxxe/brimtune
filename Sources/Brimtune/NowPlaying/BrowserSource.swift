@@ -77,7 +77,7 @@ final class BrowserSource: NowPlayingSource {
     var onChange: ((TrackSnapshot?) -> Void)?
     var onArtwork: ((String, NSImage) -> Void)?
 
-    private let queue = DispatchQueue(label: "brimtune.browser", qos: .userInitiated)
+    private let queue = AppleScriptQueue.shared
     private var timer: Timer?
     private var activeTab: Tab?
     /// A YouTube Music tab, even when nothing is playing in it, so Brimtune can start music there.
@@ -114,13 +114,14 @@ final class BrowserSource: NowPlayingSource {
     private var lastScanPlaying = false
     private var lastTick = Date()
     private var lastErrorLog = Date.distantPast
+    private var lastPublished = ""
 
     /// Scans every 1.5 s while music plays (position, lyrics), every 5 s otherwise.
     private func tick() {
         // A timer this late means macOS has been napping the app (see AppDelegate.keepAwake).
         let gap = Date().timeIntervalSince(lastTick)
         lastTick = Date()
-        if lastScanPlaying, gap > 6 { NSLog("Brimtune: %@ check ran %.0f s late", browser.name, gap) }
+        if lastScanPlaying, gap > 6 { brimtuneLog("%@ check ran %.0f s late", browser.name, gap) }
         guard lastScanPlaying || Date().timeIntervalSince(lastScan) > 5 else { return }
         refresh()
     }
@@ -137,7 +138,7 @@ final class BrowserSource: NowPlayingSource {
             let output = script.executeAndReturnError(&error).stringValue ?? ""
             if let error, Date().timeIntervalSince(self.lastErrorLog) > 60 {
                 self.lastErrorLog = Date()
-                NSLog("Brimtune: reading %@ failed: %@", self.browser.name, error[NSAppleScript.errorNumber] as? NSNumber ?? -1)
+                brimtuneLog("reading %@ failed: %@", self.browser.name, error[NSAppleScript.errorNumber] as? NSNumber ?? -1)
             }
             let found = error == nil ? self.parse(output) : nil
             // A title-only song is held back a moment for its catalog lookup, so it appears once,
@@ -157,6 +158,8 @@ final class BrowserSource: NowPlayingSource {
             onChange?(nil)
             return
         }
+        let summary = "\(tab.window)/\(tab.index) access=\(tab.pageAccess) playing=\(snapshot.isPlaying)"
+        if summary != lastPublished { lastPublished = summary; brimtuneLog("%@ reads tab %@", browser.name, summary) }
         activeTab = tab
         lastScanPlaying = snapshot.isPlaying
         onChange?(snapshot)
@@ -757,9 +760,9 @@ final class BrowserSource: NowPlayingSource {
             js = "var e=document.querySelectorAll('ytmusic-player-queue-item')[\(index)]; if(e){var b=e.querySelector('ytmusic-play-button-renderer'); (b||e).click()}"
         case (.spotify, .playQueueItem), (_, .like): return
         }
-        NSLog("Brimtune: sending %@ to %@", String(describing: command), browser.name)
+        brimtuneLog("sending %@ to %@", String(describing: command), browser.name)
         evaluate(js + "; 'ok'", in: tab) { [weak self] result in
-            if result != "ok" { NSLog("Brimtune: %@ didn't take %@", self?.browser.name ?? "", String(describing: command)) }
+            if result != "ok" { brimtuneLog("%@ didn't take %@", self?.browser.name ?? "", String(describing: command)) }
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) { self?.refresh() }
         }
     }
@@ -826,7 +829,7 @@ final class BrowserSource: NowPlayingSource {
         let script = NSAppleScript(source: source)
         var error: NSDictionary?
         script?.compileAndReturnError(&error)
-        if let error { NSLog("Brimtune: browser script failed to compile: %@", error) }
+        if let error { brimtuneLog("browser script failed to compile: %@", error) }
         return error == nil ? script : nil
     }
 }

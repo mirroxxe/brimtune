@@ -27,7 +27,7 @@ final class ScriptableSource: NowPlayingSource {
     var onChange: ((TrackSnapshot?) -> Void)?
     var onArtwork: ((String, NSImage) -> Void)?
 
-    private let queue = DispatchQueue(label: "brimtune.applescript", qos: .userInitiated)
+    private let queue = AppleScriptQueue.shared
     private var timer: Timer?
     private var artworkTrackID: String?
     private var quietUntil = Date.distantPast

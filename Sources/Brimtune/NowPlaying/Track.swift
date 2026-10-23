@@ -90,6 +90,13 @@ struct TrackSnapshot: Equatable {
     }
 }
 
+/// The one queue every AppleScript in Brimtune runs on. NSAppleScript can't run two
+/// scripts at once: with Safari and Chrome read in parallel, one browser's answers
+/// landed in the other's reading and scripts failed (-1751), so tracks lagged or vanished.
+enum AppleScriptQueue {
+    static let shared = DispatchQueue(label: "brimtune.applescript", qos: .userInitiated)
+}
+
 protocol NowPlayingSource: AnyObject {
     /// Higher wins when two sources report the same thing.
     var priority: Int { get }

@@ -98,6 +98,13 @@ final class NowPlayingCenter: ObservableObject {
         if Date() < optimisticUntil, entry.snapshot.id == track?.id { return }
 
         let previousBrowser = activeSource as? BrowserSource
+        if source !== activeSource {
+            let states = sources.compactMap { s -> String? in
+                guard let e = entries[ObjectIdentifier(s)] else { return nil }
+                return "\((s as? BrowserSource)?.browser.name ?? String(describing: type(of: s))):\(e.snapshot.isPlaying ? "playing" : "paused"):\(Int(-e.lastPlayed.timeIntervalSinceNow))s"
+            }
+            brimtuneLog("following %@ [%@]", (source as? BrowserSource)?.browser.name ?? String(describing: type(of: source)), states.joined(separator: " "))
+        }
         activeSource = source
         // Playlists belong to the browser (and account) the music is in.
         if let browser = source as? BrowserSource, previousBrowser != nil, browser !== previousBrowser {
@@ -115,6 +122,7 @@ final class NowPlayingCenter: ObservableObject {
         track = next
 
         if changed {
+            brimtuneLog("track changed (%@, %@)", (source as? BrowserSource)?.browser.name ?? String(describing: type(of: source)), next.isPlaying ? "playing" : "paused")
             setArtwork(artworkByTrack[next.id])
             trackChanged.send(next)
             if preferences.lyricsEnabled { loadLyrics(for: next) }
