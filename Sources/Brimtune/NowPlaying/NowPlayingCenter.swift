@@ -246,6 +246,11 @@ final class NowPlayingCenter: ObservableObject {
     /// "Allow JavaScript from Apple Events" is on).
     var browserHasPageAccess: Bool { followedBrowser != nil }
 
+    /// Whether this browser has a music tab that answers our JavaScript.
+    func hasPageAccess(in browser: BrowserSource.Browser) -> Bool {
+        browsers.first { $0.browser == browser }?.hasPageAccess == true
+    }
+
     private var followedBrowser: BrowserSource? {
         browsers.first(where: \.hasPageAccess)
     }

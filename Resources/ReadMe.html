@@ -29,20 +29,23 @@
 <p style="font-family: Menlo, monospace; font-size: 12px;">xattr -dr com.apple.quarantine /Applications/Brimtune.app</p>
 <p>Then open Brimtune again.</p>
 
-<h2 style="font-size: 17px;">3. Permissions</h2>
+<h2 style="font-size: 17px;">3. The one switch not to skip (YouTube Music or Spotify in a browser)</h2>
+<p><b>If you listen in Safari or Chrome, turn this on once in each browser you use.</b> Without it Brimtune only sees the song's name: no covers, no progress, no playlists, and lyrics can't keep time. Browsers don't let apps switch it on for you, so it takes you ten seconds:</p>
+<ul>
+<li><b>Safari:</b> Safari → Settings → Advanced → turn on <i>Show features for web developers</i>. Then Settings → <b>Developer</b> → turn on <i>Allow JavaScript from Apple Events</i>.</li>
+<li><b>Chrome:</b> in the menu bar, View → Developer → <i>Allow JavaScript from Apple Events</i> (a tick appears).</li>
+</ul>
+<p>The setup guide walks you through it and checks it for you. If you only use the Music or Spotify apps, skip this.</p>
+
+<h2 style="font-size: 17px;">4. Permissions</h2>
 <p>A setup guide opens on first launch and asks for each permission in turn, explaining what it's for. Only the first group is needed for music; everything else is optional and can be changed later in Brimtune's Settings or in System Settings → Privacy &amp; Security.</p>
 
 <h3 style="font-size: 14px;">For your music</h3>
 <ul>
 <li><b>Music and Spotify apps.</b> The first time they play, macOS asks whether Brimtune may control them. Click <b>Allow</b>. This lets Brimtune see what's playing and send play, pause and skip. <i>(System Settings → Privacy &amp; Security → Automation.)</i></li>
 <li><b>Safari or Chrome</b>, for YouTube Music and Spotify on the web. Allow Brimtune to control your browser when asked (also under Automation).</li>
-<li><b>Covers, progress, Up Next and playlists from the browser</b> need one switch in the browser itself:
-  <ul>
-  <li><b>Safari:</b> Safari → Settings → Advanced → turn on <i>Show features for web developers</i>. Then open the new <b>Developer</b> tab and turn on <i>Allow JavaScript from Apple Events</i>.</li>
-  <li><b>Chrome:</b> View → Developer → <i>Allow JavaScript from Apple Events</i>.</li>
-  </ul></li>
+<li><b>Covers, progress, Up Next and playlists from the browser</b> need the switch from step 3.</li>
 </ul>
-<p>Without that switch Brimtune still shows the song's title and finds a cover by itself, and the controls keep working.</p>
 
 <h3 style="font-size: 14px;">Optional extras</h3>
 <ul>
@@ -53,7 +56,7 @@
 </ul>
 <p>If you clicked <b>Don't Allow</b> by mistake, turn the permission on in System Settings → Privacy &amp; Security, then quit and reopen Brimtune. You can reopen the setup guide at any time from the menu bar icon → <b>Setup Guide</b>.</p>
 
-<h2 style="font-size: 17px;">4. Using it</h2>
+<h2 style="font-size: 17px;">5. Using it</h2>
 <ul>
 <li>Brimtune has no Dock icon. It lives in the notch and in the menu bar (a tiny island icon).</li>
 <li>Hover the notch to open the player, search and your playlists. Click the cover for the full-screen player with lyrics.</li>
@@ -61,7 +64,7 @@
 <li>Timers, the stopwatch, your listening history, Settings and <b>Check for Updates</b> are in the menu bar icon.</li>
 </ul>
 
-<h2 style="font-size: 17px;">5. Something not working?</h2>
+<h2 style="font-size: 17px;">6. Something not working?</h2>
 <ul>
 <li><b>Nothing appears in the notch:</b> play something first; the island stays quiet when nothing is playing. Check that Brimtune is running (its menu bar icon is there).</li>
 <li><b>A browser tab isn't picked up:</b> Brimtune follows music.youtube.com and open.spotify.com in Safari and Chrome. Check the Automation permission and the <i>Allow JavaScript from Apple Events</i> switch above.</li>

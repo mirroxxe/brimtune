@@ -10,8 +10,10 @@ import SwiftUI
 final class PermissionStatus: ObservableObject {
     enum State: Equatable { case unknown, needed, granted, denied, unavailable }
 
-    @Published private(set) var safari: State = .unknown
-    @Published private(set) var safariPageAccess = false
+    /// May Brimtune send Apple Events to each browser (System Settings → Automation).
+    @Published private(set) var automation: [BrowserSource.Browser: State] = [:]
+    /// Has "Allow JavaScript from Apple Events" been switched on in each browser.
+    @Published private(set) var javaScript: [BrowserSource.Browser: Bool] = [:]
     @Published private(set) var calendar: State = .unknown
     @Published private(set) var bluetooth: State = .unknown
     @Published var audioRequested = UserDefaults.standard.bool(forKey: "audioCaptureAsked")
@@ -36,7 +38,6 @@ final class PermissionStatus: ObservableObject {
     }
 
     func refresh() {
-        safariPageAccess = center.browserHasPageAccess
         calendar = switch EKEventStore.authorizationStatus(for: .event) {
         case .fullAccess: .granted
         case .notDetermined: .needed
@@ -47,10 +48,33 @@ final class PermissionStatus: ObservableObject {
         case .notDetermined: .needed
         default: .denied
         }
-        Task.detached { [weak self] in
-            let state = Self.automationState(for: "com.apple.Safari", ask: false)
-            await MainActor.run { self?.safari = state }
+        for browser in BrowserSource.Browser.allCases {
+            let reading = center.hasPageAccess(in: browser)
+            AppleScriptQueue.shared.async { [weak self] in
+                let state = Self.automationState(for: browser.bundleID, ask: false)
+                // Only probe once macOS has said yes: probing earlier would bring up its prompt.
+                let works = reading || (state == .granted && Self.javaScriptWorks(in: browser))
+                DispatchQueue.main.async {
+                    guard let self else { return }
+                    if self.automation[browser] != state { self.automation[browser] = state }
+                    if self.javaScript[browser] != works { self.javaScript[browser] = works }
+                }
+            }
         }
+    }
+
+    /// Runs a one-line script in the browser's front tab: browsers refuse with an error
+    /// until "Allow JavaScript from Apple Events" is on. A page Brimtune follows counts too
+    /// (see `NowPlayingCenter.hasPageAccess`), for when the front tab is a blank one.
+    nonisolated static func javaScriptWorks(in browser: BrowserSource.Browser) -> Bool {
+        guard !NSRunningApplication.runningApplications(withBundleIdentifier: browser.bundleID).isEmpty else { return false }
+        let source = switch browser {
+        case .safari: "tell application id \"com.apple.Safari\" to do JavaScript \"1+1\" in current tab of front window"
+        case .chrome: "tell application id \"com.google.Chrome\" to execute active tab of front window javascript \"1+1\""
+        }
+        var error: NSDictionary?
+        let result = NSAppleScript(source: source)?.executeAndReturnError(&error)
+        return error == nil && (result?.int32Value == 2 || result?.stringValue == "2")
     }
 
     /// Whether we may send Apple Events to an app. macOS can only answer while
@@ -69,8 +93,8 @@ final class PermissionStatus: ObservableObject {
 
     // MARK: Requests
 
-    func requestSafari() {
-        let id = "com.apple.Safari"
+    func requestAutomation(for browser: BrowserSource.Browser) {
+        let id = browser.bundleID
         if NSRunningApplication.runningApplications(withBundleIdentifier: id).isEmpty,
            let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: id) {
             // macOS can only ask about an app that is running.
@@ -79,7 +103,7 @@ final class PermissionStatus: ObservableObject {
         Task.detached { [weak self] in
             try? await Task.sleep(for: .seconds(1.5))
             let state = Self.automationState(for: id, ask: true)
-            await MainActor.run { self?.safari = state }
+            await MainActor.run { self?.automation[browser] = state }
         }
     }
 
@@ -98,6 +122,16 @@ final class PermissionStatus: ObservableObject {
         DispatchQueue.main.asyncAfter(deadline: .now() + 4) { [center] in
             if center.track?.isPlaying != true { AudioLevels.shared.setListening(false) }
         }
+    }
+
+    func open(_ browser: BrowserSource.Browser) {
+        if let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: browser.bundleID) {
+            NSWorkspace.shared.openApplication(at: url, configuration: .init())
+        }
+    }
+
+    func isInstalled(_ browser: BrowserSource.Browser) -> Bool {
+        NSWorkspace.shared.urlForApplication(withBundleIdentifier: browser.bundleID) != nil
     }
 
     func openSystemSettings(_ anchor: String) {
@@ -182,16 +216,31 @@ private struct OnboardingView: View {
 
     @State private var page = 0
     @State private var forward = true
-    private let pages = 4
+    @StateObject private var listening = Listening()
+
+    private enum Step { case welcome, music, browserSwitch, extras, done }
+
+    /// The browser page only appears for people who listen in a browser.
+    private var steps: [Step] {
+        listening.browsers.isEmpty ? [.welcome, .music, .extras, .done] : [.welcome, .music, .browserSwitch, .extras, .done]
+    }
+    private var pages: Int { steps.count }
+    private var step: Step { steps[min(page, steps.count - 1)] }
+
+    /// On the browser page, every chosen browser must have its switch on (or the user says so).
+    private var canContinue: Bool {
+        step != .browserSwitch || listening.browsers.allSatisfy { status.javaScript[$0] == true || listening.confirmed.contains($0) }
+    }
 
     var body: some View {
         VStack(spacing: 0) {
             ZStack {
-                switch page {
-                case 0: WelcomePage()
-                case 1: MusicPage(status: status)
-                case 2: ExtrasPage(status: status, preferences: preferences, activities: activities)
-                default: DonePage()
+                switch step {
+                case .welcome: WelcomePage()
+                case .music: MusicPage(status: status, listening: listening)
+                case .browserSwitch: BrowserSwitchPage(status: status, listening: listening)
+                case .extras: ExtrasPage(status: status, preferences: preferences, activities: activities)
+                case .done: DonePage()
                 }
             }
             .id(page)
@@ -223,6 +272,8 @@ private struct OnboardingView: View {
                 Button(page == pages - 1 ? "Start Using Brimtune" : "Continue") {
                     page == pages - 1 ? finish() : go(1)
                 }
+                .disabled(!canContinue)
+                .help(canContinue ? "" : "Turn the switch on in each browser, or tick “I've turned it on”.")
                 .keyboardShortcut(.defaultAction)
                 .controlSize(.large)
                 .buttonStyle(.borderedProminent)
@@ -375,34 +426,158 @@ private struct StateBadge: View {
     }
 }
 
+/// Where the user listens, remembered for the browser page that follows.
+@MainActor
+private final class Listening: ObservableObject {
+    @Published var safari: Bool { didSet { UserDefaults.standard.set(safari, forKey: "listensInSafari") } }
+    @Published var chrome: Bool { didSet { UserDefaults.standard.set(chrome, forKey: "listensInChrome") } }
+    @Published var apps: Bool { didSet { UserDefaults.standard.set(apps, forKey: "listensInApps") } }
+    /// Browsers whose switch the user says is on, though we couldn't see it yet.
+    @Published var confirmed: Set<BrowserSource.Browser> = []
+
+    init() {
+        let d = UserDefaults.standard
+        d.register(defaults: ["listensInSafari": true, "listensInChrome": false, "listensInApps": false])
+        safari = d.bool(forKey: "listensInSafari")
+        chrome = d.bool(forKey: "listensInChrome")
+        apps = d.bool(forKey: "listensInApps")
+    }
+
+    var browsers: [BrowserSource.Browser] {
+        (safari ? [.safari] : []) + (chrome ? [.chrome] : [])
+    }
+}
+
 private struct MusicPage: View {
     @ObservedObject var status: PermissionStatus
+    @ObservedObject var listening: Listening
 
     var body: some View {
-        VStack(spacing: 20) {
-            PageHeader(symbol: "music.note.house.fill", tint: .pink, title: "Connect your music",
-                       subtitle: "Apple Music and Spotify work on their own: macOS asks once the first time they play.\nFor YouTube Music and Spotify on the web, Brimtune talks to Safari.")
+        VStack(spacing: 18) {
+            PageHeader(symbol: "music.note.house.fill", tint: .pink, title: "Where do you listen?",
+                       subtitle: "Pick everything you use. For YouTube Music or Spotify on the web,\nBrimtune needs your browser's OK.")
+            HStack(spacing: 10) {
+                Choice(title: "Safari", symbol: "safari.fill", on: $listening.safari, enabled: status.isInstalled(.safari))
+                Choice(title: "Chrome", symbol: "globe", on: $listening.chrome, enabled: status.isInstalled(.chrome))
+                Choice(title: "Music or Spotify app", symbol: "music.note", on: $listening.apps, enabled: true)
+            }
             VStack(spacing: 10) {
-                PermissionRow(symbol: "safari.fill", tint: .blue, title: "Control Safari",
-                              detail: "Read what's playing in your browser and send play, pause and skip.") {
-                    StateBadge(state: status.safari, ask: status.requestSafari,
-                               fix: { status.openSystemSettings("Privacy_Automation") })
+                ForEach(listening.browsers, id: \.self) { browser in
+                    PermissionRow(symbol: browser == .safari ? "safari.fill" : "globe", tint: .blue,
+                                  title: "Let Brimtune control \(browser.name)",
+                                  detail: "To see what's playing there and send play, pause and skip. macOS asks once.") {
+                        StateBadge(state: status.automation[browser] ?? .unknown,
+                                   ask: { status.requestAutomation(for: browser) },
+                                   fix: { status.openSystemSettings("Privacy_Automation") })
+                    }
                 }
-                PermissionRow(symbol: "curlybraces", tint: .purple, title: "Covers, progress & playlists",
-                              detail: "In Safari: Settings → Advanced → turn on “Show features for web developers”. Then the Developer tab → “Allow JavaScript from Apple Events”.") {
-                    if status.safariPageAccess {
-                        Label("Working", systemImage: "checkmark.circle.fill")
-                            .font(.system(size: 12, weight: .semibold))
-                            .foregroundStyle(.green)
-                    } else {
-                        Button("Open YouTube Music") {
-                            NSWorkspace.shared.open(URL(string: "https://music.youtube.com")!)
-                        }
-                        .controlSize(.small)
-                        .help("Open it in Safari; this row turns green once Brimtune can read the page.")
+                if listening.apps {
+                    PermissionRow(symbol: "music.note", tint: .pink, title: "Music and Spotify apps",
+                                  detail: "Nothing to do now: macOS asks the first time they play.") {
+                        Label("Ready", systemImage: "checkmark.circle.fill")
+                            .font(.system(size: 12, weight: .semibold)).foregroundStyle(.green)
                     }
                 }
             }
+        }
+    }
+
+    private struct Choice: View {
+        let title: String
+        let symbol: String
+        @Binding var on: Bool
+        let enabled: Bool
+
+        var body: some View {
+            Button { on.toggle() } label: {
+                HStack(spacing: 7) {
+                    Image(systemName: on ? "checkmark.circle.fill" : "circle")
+                        .foregroundStyle(on ? Color.accentColor : .secondary)
+                    Image(systemName: symbol)
+                    Text(title).font(.system(size: 12.5, weight: .semibold))
+                }
+                .padding(.horizontal, 12).padding(.vertical, 8)
+                .background(Color.primary.opacity(on ? 0.12 : 0.05), in: Capsule())
+            }
+            .buttonStyle(.plain)
+            .disabled(!enabled)
+            .opacity(enabled ? 1 : 0.4)
+            .help(enabled ? "" : "\(title) isn't installed.")
+        }
+    }
+}
+
+/// The one step people miss: each browser only lets Brimtune read the page once
+/// "Allow JavaScript from Apple Events" is on. Continue waits for it.
+private struct BrowserSwitchPage: View {
+    @ObservedObject var status: PermissionStatus
+    @ObservedObject var listening: Listening
+
+    var body: some View {
+        VStack(spacing: 14) {
+            VStack(spacing: 6) {
+                Text("One important switch").font(.system(size: 24, weight: .bold))
+                Text("Turn this on in each browser you listen in. Without it Brimtune only sees the song's name:\nno covers, progress, playlists or lyrics that keep time.")
+                    .font(.system(size: 12.5)).foregroundStyle(.secondary).multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            ForEach(listening.browsers, id: \.self) { browser in
+                Card(browser: browser, works: status.javaScript[browser] == true,
+                     confirmed: Binding(get: { listening.confirmed.contains(browser) },
+                                        set: { if $0 { listening.confirmed.insert(browser) } else { listening.confirmed.remove(browser) } }),
+                     open: { status.open(browser) })
+            }
+        }
+    }
+
+    private struct Card: View {
+        let browser: BrowserSource.Browser
+        let works: Bool
+        @Binding var confirmed: Bool
+        let open: () -> Void
+
+        private var steps: [String] {
+            switch browser {
+            case .safari: [
+                "Safari → Settings → Advanced: turn on “Show features for web developers”.",
+                "Settings → Developer: turn on “Allow JavaScript from Apple Events”.",
+            ]
+            case .chrome: [
+                "In Chrome's menu bar: View → Developer.",
+                "Click “Allow JavaScript from Apple Events” so it has a tick.",
+            ]
+            }
+        }
+
+        var body: some View {
+            VStack(alignment: .leading, spacing: 9) {
+                HStack {
+                    Image(systemName: browser == .safari ? "safari.fill" : "globe").foregroundStyle(.blue)
+                    Text(browser.name).font(.system(size: 14, weight: .bold))
+                    Spacer()
+                    if works {
+                        Label("On, Brimtune can read it", systemImage: "checkmark.circle.fill")
+                            .font(.system(size: 12, weight: .semibold)).foregroundStyle(.green)
+                    } else {
+                        Button("Open \(browser.name)", action: open).controlSize(.small)
+                    }
+                }
+                ForEach(Array(steps.enumerated()), id: \.offset) { i, step in
+                    HStack(alignment: .firstTextBaseline, spacing: 8) {
+                        Text("\(i + 1)").font(.system(size: 11, weight: .bold)).foregroundStyle(.orange)
+                            .frame(width: 18, height: 18).background(Color.orange.opacity(0.16), in: Circle())
+                        Text(step).font(.system(size: 12)).fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+                if !works {
+                    Toggle("I've turned it on", isOn: $confirmed)
+                        .toggleStyle(.checkbox).font(.system(size: 12))
+                }
+            }
+            .padding(14)
+            .background(Color.primary.opacity(0.05), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .strokeBorder(works ? Color.green.opacity(0.5) : Color.orange.opacity(0.45), lineWidth: 1))
         }
     }
 }

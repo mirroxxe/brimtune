@@ -5,7 +5,7 @@ import AppKit
 /// allows after "Allow JavaScript from Apple Events" is switched on. Until then the
 /// tab title still tells us the song, but controls can't reach the page.
 final class BrowserSource: NowPlayingSource {
-    enum Browser {
+    enum Browser: CaseIterable {
         case safari, chrome
 
         var bundleID: String {
