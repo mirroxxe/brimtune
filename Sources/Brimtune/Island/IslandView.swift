@@ -49,8 +49,10 @@ struct IslandView: View {
         case .hidden, .idle:
             Color.clear
         case .compact:
+            // Floating, the cover sits as far from the pill's left edge as from its top and bottom.
             CompactContent(center: center, activities: activities, ns: ns, notchHeight: h)
-                .padding(.horizontal, inset + 10)
+                .padding(.leading, model.floating ? 6 : inset + 10)
+                .padding(.trailing, model.floating ? 14 : inset + 10)
                 .transition(.morph)
         case .peek:
             PeekContent(center: center, ns: ns, notchHeight: h)
@@ -212,7 +214,7 @@ private struct CompactContent: View {
         let activity = LiveActivity.primary(in: activities)
         HStack(spacing: 0) {
             if center.track != nil {
-                ArtworkView(image: center.artwork, cornerRadius: 5, palette: center.palette)
+                ArtworkView(image: center.artwork, cornerRadius: 6, palette: center.palette)
                     .matchedGeometryEffect(id: "art", in: ns)
                     .frame(width: notchHeight - 12, height: notchHeight - 12)
                     // On pause the cover sinks a little before the island folds into the notch.

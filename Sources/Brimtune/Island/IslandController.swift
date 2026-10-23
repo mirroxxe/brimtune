@@ -159,7 +159,7 @@ final class IslandController {
 
         layout()
         panel.orderFrontRegardless()
-        LockScreenSpace.adopt(panel)
+        adoptLockScreenSpace()
 
         observe()
         installMouseTracking()
@@ -175,6 +175,13 @@ final class IslandController {
 
     // MARK: Layout
 
+    /// The lock-screen space lives on the primary display (the one at the origin): a window
+    /// moved into it from another display isn't drawn at all, so other displays keep a normal panel.
+    private func adoptLockScreenSpace() {
+        guard screen.frame.origin == .zero else { return }
+        LockScreenSpace.adopt(panel)
+    }
+
     private func layout() {
         let frame = screen.frame
         if screen.safeAreaInsets.top > 0,
@@ -183,7 +190,8 @@ final class IslandController {
             model.hasNotch = true
             model.floating = false
         } else {
-            model.notch = CGSize(width: 64, height: 34)
+            // A virtual gap between the wings, sized so the compact island is a wide pill.
+            model.notch = CGSize(width: 96, height: 36)
             model.hasNotch = false
             model.floating = true
         }
@@ -389,7 +397,7 @@ final class IslandController {
         if panel.isKeyWindow {
             panel.orderOut(nil)
             panel.orderFrontRegardless()
-            LockScreenSpace.adopt(panel)
+            adoptLockScreenSpace()
         }
         update()
     }
