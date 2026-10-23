@@ -279,7 +279,7 @@ p { margin: 0 0 1rem; }
 .hero-copy { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: flex-end; padding: 0 var(--gutter) 7vh; }
 .kicker { font: 500 .95rem/1 var(--text); color: color-mix(in srgb, var(--moon) 75%, transparent); margin-bottom: 1.4rem; }
 .hero h1 {
-  font-size: clamp(3.6rem, 10.4vw, 11.2rem); line-height: .86; font-weight: 600; letter-spacing: -.045em; color: var(--moon); max-width: 11.5ch;
+  font-size: min(11.2rem, max(10.4vw, min(3.6rem, 15.4vw))); /* shrinks only below ~375px */ line-height: .86; font-weight: 600; letter-spacing: -.045em; color: var(--moon); max-width: 11.5ch;
 }
 .hero-row { display: flex; justify-content: space-between; align-items: flex-end; gap: 2rem 4rem; margin-top: 2.6rem; flex-wrap: wrap; }
 .lede { font-size: 1.2rem; line-height: 1.5; max-width: 31rem; margin: 0; color: color-mix(in srgb, var(--moon) 82%, var(--haze)); }
