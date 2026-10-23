@@ -90,6 +90,7 @@ final class BrowserSource: NowPlayingSource {
     // Title-only bookkeeping, touched only on `queue`.
     private var catalog: [String: CatalogEntry?] = [:]
     private var lookupsInFlight: Set<String> = []
+    private var lookupStarted: [String: Date] = [:]
     private var lookupPending = false
     private var clock: (key: String, anchor: Date, frozen: TimeInterval?)?
     private lazy var scanScript = compile(scanSource)
@@ -139,8 +140,13 @@ final class BrowserSource: NowPlayingSource {
                 NSLog("Brimtune: reading %@ failed: %@", self.browser.name, error[NSAppleScript.errorNumber] as? NSNumber ?? -1)
             }
             let found = error == nil ? self.parse(output) : nil
-            // A title-only song is held back until its catalog lookup lands, so it appears once, complete.
-            if self.lookupPending { self.lookupPending = false; return }
+            // A title-only song is held back a moment for its catalog lookup, so it appears once,
+            // complete; look again shortly in case the lookup is slow.
+            if self.lookupPending {
+                self.lookupPending = false
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) { self.refresh() }
+                return
+            }
             DispatchQueue.main.async { self.publish(found) }
         }
     }
@@ -320,11 +326,11 @@ final class BrowserSource: NowPlayingSource {
             guard parts.count >= 2 else { return nil }
             song = parts[0]; artist = parts[1...].joined(separator: " • ")
         case .youtubeMusic:
-            song = title
-            for suffix in [" | YouTube Music", " - YouTube Music"] where song.hasSuffix(suffix) {
-                song = String(song.dropLast(suffix.count))
-            }
-            guard !song.isEmpty, song != "YouTube Music" else { return nil }
+            // "Song | YouTube Music" while a song is on. Any other title is a page (a playlist,
+            // an album, Home), not a song.
+            guard let suffix = [" | YouTube Music", " - YouTube Music"].first(where: title.hasSuffix) else { return nil }
+            song = String(title.dropLast(suffix.count))
+            guard !song.isEmpty else { return nil }
         }
         let key = "\(song)|\(artist)"
         lastTitleOnlyID = key
@@ -339,9 +345,14 @@ final class BrowserSource: NowPlayingSource {
         clock = c
         let elapsed = c.frozen ?? now.timeIntervalSince(c.anchor)
 
-        guard let entry = catalog[key] else {
+        let entry: CatalogEntry?
+        if let cached = catalog[key] {
+            entry = cached
+        } else {
             lookUp(song: song, artist: artist, key: key)
-            return nil
+            // Wait briefly for the cover and artist, but never long: the song matters more.
+            if now.timeIntervalSince(lookupStarted[key] ?? now) < 1.5 { lookupPending = true; return nil }
+            entry = nil
         }
 
         let snapshot = TrackSnapshot(
@@ -365,9 +376,9 @@ final class BrowserSource: NowPlayingSource {
     /// title match counts (artist too, when the tab gives one): a guessed cover is worse
     /// than the placeholder. The local storefront goes first, then the US one.
     private func lookUp(song: String, artist: String, key: String) {
-        lookupPending = true
         guard !lookupsInFlight.contains(key) else { return }
         lookupsInFlight.insert(key)
+        lookupStarted[key] = Date()
         let region = Locale.current.region?.identifier.lowercased() ?? "us"
         let storefronts = region == "us" ? ["us"] : [region, "us"]
         search(song: song, artist: artist, storefronts: storefronts[...]) { [weak self] entry in
@@ -375,6 +386,7 @@ final class BrowserSource: NowPlayingSource {
             self.queue.async {
                 self.catalog[key] = .some(entry)
                 self.lookupsInFlight.remove(key)
+                self.lookupStarted[key] = nil
                 DispatchQueue.main.async { self.refresh() }
             }
         }
@@ -390,7 +402,9 @@ final class BrowserSource: NowPlayingSource {
             .init(name: "country", value: country),
             .init(name: "limit", value: "15"),
         ]
-        URLSession.shared.dataTask(with: url.url!) { [weak self] data, _, _ in
+        var request = URLRequest(url: url.url!)
+        request.timeoutInterval = 4
+        URLSession.shared.dataTask(with: request) { [weak self] data, _, _ in
             let results = data
                 .flatMap { try? JSONSerialization.jsonObject(with: $0) as? [String: Any] }?["results"] as? [[String: Any]] ?? []
             let wantedTitle = Self.normalized(song), wantedArtist = Self.normalized(artist)
