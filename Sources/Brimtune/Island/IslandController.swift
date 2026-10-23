@@ -301,7 +301,8 @@ final class IslandController {
         if model.alert != nil { return .alert }
         if peeking, center.track != nil { return .peek }
         if hasActivePlayback || activities.hasLiveActivity { return .compact }
-        return model.hasNotch ? .idle : .hidden
+        // Floating, the idle island stays as a small pill: something to see and hover.
+        return .idle
     }
 
     private func update(animated: Bool = true) {
