@@ -6,7 +6,9 @@ player on the lock screen and a full-screen player. Previously named **Isle** (b
 `app.isle.nowplaying`); now **Brimtune**, bundle id `app.brimtune.mac`. Made in Ukraine by
 Volodymyr Chuchman. The user speaks Ukrainian: reply in Ukrainian; code, UI and site are English.
 
-- Repo: `~/Brimtune`, private GitHub `mirroxxe/brimtune` (gh CLI is logged in as `mirroxxe`).
+- Repo: `~/Brimtune`, public GitHub `mirroxxe/brimtune`, open source under GPL-3.0 since 2026-10-23
+  (the name and icon stay with the official app, GPL-3.0 7(e); see `README.md`, `Legal/terms-of-use.md`).
+  gh CLI is logged in as `mirroxxe`.
 - Support email: brimtune.support@gmail.com. Site (live since 2026-10-23): https://brimtune.pages.dev
 - Free distribution, no Apple Developer Program: signed with a self-signed certificate.
 
@@ -36,6 +38,8 @@ messages with `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`.
   `ScriptableSource` (Music/Spotify apps), `MediaRemoteSource` (reading blocked on macOS 15.4+,
   sending commands still works). YouTube Music playback is switched in-page via the `yt-navigate`
   event — never by setting the tab URL (that triggers Safari's "Leave page?" dialog).
+- `Services/FullScreen.swift` — hides the island on displays whose current space is full screen
+  (SkyLight space type 4), toggle in Settings.
 - `Island/` — one `IslandController` per display (notch shape on built-in, floating pill on
   external); modes hidden/idle/compact/peek/alert/expanded; expanded height is measured;
   search field, Up Next (collapsible), playlist shelf + song list.
@@ -64,7 +68,9 @@ wallpaper, music-video clip player, volume HUD.
 
 Static HTML/CSS/JS, no framework. `index.html`, `styles.css`, `island.js` (live demo island fixed
 at the top: hover opens the player, scroll switches small states, made-up tracks recolour the
-page), `motion.js` (scroll scenes), `build-pages.mjs` + `doc-template.html` render privacy/terms/licenses/changelog.
+page), `motion.js` (scroll scenes), `download.js` (Download opens a
+"Brimtune is free / buy me a coffee" dialog, only once `<meta name="brimtune-donate">` holds a link;
+the user is setting up Buy Me a Coffee or Ko-fi), `build-pages.mjs` + `doc-template.html` render privacy/terms/licenses/changelog.
 Fonts: Archivo (display, heavy 800 with light italic accents in <em>) + Geist (text). Colours: night #0E0B18, lilac paper #F1EEF6,
 ink #16121F, accents rose #F2648E, iris #7C6CF2, amber #FFAE57. Use made-up songs/covers/lyrics
 only (no real copyrighted ones).
