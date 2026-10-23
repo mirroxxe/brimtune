@@ -161,7 +161,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     @objc private func showAbout() {
         let credits = NSMutableAttributedString(
-            string: "Your Mac's notch, playing along.\n\nLyrics from LRCLIB · Covers from Apple's iTunes Search\nMade in Ukraine",
+            string: "Your Mac's notch, playing along.\n\nLyrics from LRCLIB · Covers from Apple's iTunes Search\nSupport: brimtune.support@gmail.com\nMade in Ukraine",
             attributes: [.font: NSFont.systemFont(ofSize: 11), .foregroundColor: NSColor.secondaryLabelColor]
         )
         let paragraph = NSMutableParagraphStyle()
@@ -169,6 +169,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         credits.addAttribute(.paragraphStyle, value: paragraph, range: NSRange(location: 0, length: credits.length))
         if let range = credits.string.range(of: "LRCLIB") {
             credits.addAttribute(.link, value: URL(string: "https://lrclib.net")!, range: NSRange(range, in: credits.string))
+        }
+        if let range = credits.string.range(of: "brimtune.support@gmail.com") {
+            credits.addAttribute(.link, value: URL(string: "mailto:brimtune.support@gmail.com")!, range: NSRange(range, in: credits.string))
         }
         NSApp.activate(ignoringOtherApps: true)
         NSApp.orderFrontStandardAboutPanel(options: [.credits: credits])

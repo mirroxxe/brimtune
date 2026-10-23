@@ -100,4 +100,4 @@ Brimtune works with.
 
 ## Contact
 
-[CONTACT EMAIL]
+[brimtune.support@gmail.com](mailto:brimtune.support@gmail.com)

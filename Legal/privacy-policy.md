@@ -83,4 +83,4 @@ changes will also be mentioned in the release notes.
 
 ## Contact
 
-Questions about privacy: [CONTACT EMAIL]
+Questions about privacy: [brimtune.support@gmail.com](mailto:brimtune.support@gmail.com)
