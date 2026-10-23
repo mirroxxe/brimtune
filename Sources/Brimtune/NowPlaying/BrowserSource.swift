@@ -421,22 +421,26 @@ final class BrowserSource: NowPlayingSource {
     /// "Leave this page?", which nobody can answer on the lock screen.
     func playInYouTubeMusic(videoID: String?, playlistID: String?) {
         guard let tab = musicTab else { return }
-        guard tab.pageAccess else {
-            // Without page access all that's left is pointing the tab somewhere new.
-            var url = URLComponents(string: "https://music.youtube.com/watch")!
-            url.queryItems = [videoID.map { .init(name: "v", value: $0) }, playlistID.map { .init(name: "list", value: $0) }].compactMap { $0 }
-            return navigate(to: url.url!)
-        }
+        var url = URLComponents(string: "https://music.youtube.com/watch")!
+        url.queryItems = [videoID.map { .init(name: "v", value: $0) }, playlistID.map { .init(name: "list", value: $0) }].compactMap { $0 }
+        // Without page access all that's left is pointing the tab somewhere new.
+        guard tab.pageAccess else { return navigate(to: url.url!) }
         let fields = [videoID.map { "videoId:'\($0)'" }, playlistID.map { "playlistId:'\($0)'" }].compactMap { $0 }
             .joined(separator: ",")
-        run("""
+        let js = """
         (function(){
           var app = document.querySelector('ytmusic-app');
-          if (!app) return;
+          if (!app) return '';
           app.dispatchEvent(new CustomEvent('yt-navigate', { bubbles: true, composed: true,
             detail: { endpoint: { watchEndpoint: { \(fields) } } } }));
+          return 'ok';
         })()
-        """.inPage(for: browser), in: tab)
+        """
+        guard browser == .chrome else { return run(js, in: tab) }
+        // If Chrome won't let the page's own code run, loading the song's page still plays it.
+        evaluate(inPage(js), in: tab) { [weak self] result in
+            result == "ok" ? self?.refresh() : self?.navigate(to: url.url!)
+        }
     }
 
     private static let youTubePlaylistsJS = """
@@ -469,10 +473,100 @@ final class BrowserSource: NowPlayingSource {
     })()
     """
 
-    /// Reads the playlists listed in the followed tab's sidebar.
+    /// Reads the playlists listed in the followed tab's sidebar. Chrome may keep the
+    /// sidebar's data out of reach; then the library page is read instead.
     func fetchPlaylists(completion: @escaping ([Playlist]) -> Void) {
         guard let tab = musicTab ?? activeTab, tab.pageAccess else { return completion([]) }
-        let js = tab.site == .youtubeMusic ? inPage(Self.youTubePlaylistsJS) : Self.spotifyPlaylistsJS
+        let site = tab.site
+        let js = site == .youtubeMusic ? inPage(Self.youTubePlaylistsJS) : Self.spotifyPlaylistsJS
+        evaluate(js, in: tab) { [weak self] text in
+            let lists = Self.playlists(from: text, site: site)
+            guard let self, lists.isEmpty, site == .youtubeMusic, self.browser == .chrome,
+                  Date().timeIntervalSince(self.libraryReadAt) > 60 else { return completion(lists) }
+            self.libraryReadAt = Date()
+            let start = Self.embeddedDataJS(path: "/library/playlists", attribute: "data-brimtune-lists", visit: Self.playlistVisitJS)
+            self.evaluate(start, in: tab) { _ in
+                self.collect("data-brimtune-lists", in: tab, attempts: 25) { completion(Self.playlists(from: $0, site: site)) }
+            }
+        }
+    }
+
+    /// The last time the library page was read for playlists (Chrome only); it's a big page.
+    private var libraryReadAt = Date.distantPast
+
+    private static func playlists(from json: String, site: Site) -> [Playlist] {
+        let raw = (try? JSONSerialization.jsonObject(with: Data(json.utf8)) as? [[String: Any]]) ?? []
+        return raw.compactMap { r -> Playlist? in
+            guard let id = r["id"] as? String, let title = r["t"] as? String, !title.isEmpty else { return nil }
+            let img = (r["img"] as? String).flatMap { $0.hasPrefix("http") ? URL(string: $0) : nil }
+            return Playlist(id: id, title: title, subtitle: r["s"] as? String ?? "", artwork: img, site: site.displayName)
+        }
+    }
+
+    private static func songs(from json: String) -> [PlaylistSong] {
+        let raw = (try? JSONSerialization.jsonObject(with: Data(json.utf8)) as? [[String: Any]]) ?? []
+        return raw.compactMap { r -> PlaylistSong? in
+            guard let id = r["v"] as? String, let title = r["t"] as? String else { return nil }
+            return PlaylistSong(id: id, title: title, artist: r["a"] as? String ?? "", duration: r["d"] as? String ?? "",
+                                artwork: (r["img"] as? String).flatMap(URL.init(string:)))
+        }
+    }
+
+    /// Fetches a YouTube Music page as the tab does (signed in), digs out the data the page
+    /// embeds in its HTML, and parks what `visit` collects as JSON in an attribute on <html>.
+    /// Plain DOM and network calls only, so it works where the page's own objects can't be
+    /// reached. `visit(o, out)` sees every object and returns true to skip its children.
+    private static func embeddedDataJS(path: String, attribute: String, visit: String) -> String {
+        #"""
+        (function(){
+          var root = document.documentElement;
+          root.removeAttribute('\#(attribute)');
+          fetch('\#(path)', { credentials: 'include' }).then(function(r){ return r.text() }).then(function(html){
+            var out = [], re = /data:\s*'((?:[^'\\]|\\.)*)'/g, m, visit = \#(visit);
+            var walk = function(o){ if (!o || typeof o !== 'object' || visit(o, out)) return; for (var k in o) walk(o[k]) };
+            while ((m = re.exec(html))) {
+              try { walk(JSON.parse(JSON.parse('"' + m[1].replace(/\\x([0-9a-fA-F]{2})/g, '\\u00$1').replace(/\\'/g, "'") + '"'))) } catch (e) {}
+            }
+            root.setAttribute('\#(attribute)', JSON.stringify(out));
+          }).catch(function(){ root.setAttribute('\#(attribute)', '[]') });
+          return 'started';
+        })()
+        """#
+    }
+
+    /// Playlists shown as cards (grid) or rows (list) on the library page.
+    private static let playlistVisitJS = """
+    function(o, out){
+      var runs = function(t){ return t && t.runs ? t.runs.map(function(r){ return r.text }).join('') : '' };
+      var add = function(b, t, sub){ if (b.indexOf('VL') === 0 && t && !out.some(function(p){ return p.id === b.slice(2) })) out.push({ id: b.slice(2), t: t, s: sub }) };
+      var card = o.musicTwoRowItemRenderer;
+      if (card) { add(((card.navigationEndpoint || {}).browseEndpoint || {}).browseId || '', runs(card.title), runs(card.subtitle)); return true }
+      var row = o.musicResponsiveListItemRenderer;
+      if (row) {
+        var col = function(i){ var c = row.flexColumns && row.flexColumns[i]; return c ? runs(c.musicResponsiveListItemFlexColumnRenderer.text) : '' };
+        add(((row.navigationEndpoint || {}).browseEndpoint || {}).browseId || '', col(0), col(1));
+        return true;
+      }
+      return false;
+    }
+    """
+
+    /// The songs on a playlist page.
+    private static let songVisitJS = """
+    function(o, out){
+      var m = o.musicResponsiveListItemRenderer;
+      if (!m) return false;
+      var col = function(i){ var c = m.flexColumns && m.flexColumns[i]; var rr = c && c.musicResponsiveListItemFlexColumnRenderer.text.runs; return rr ? rr.map(function(x){ return x.text }).join('') : '' };
+      var fc = m.fixedColumns && m.fixedColumns[0];
+      var th = m.thumbnail && m.thumbnail.musicThumbnailRenderer && m.thumbnail.musicThumbnailRenderer.thumbnail.thumbnails;
+      var v = (m.playlistItemData || {}).videoId;
+      if (v) out.push({ v: v, t: col(0), a: col(1), d: fc ? ((fc.musicResponsiveListItemFixedColumnRenderer.text.runs || [{}])[0].text || '') : '', img: th ? th[th.length - 1].url : '' });
+      return true;
+    }
+    """
+
+    /// Runs `js` in `tab` on the script queue and hands back what it returned ("" on failure).
+    private func evaluate(_ js: String, in tab: Tab, after delay: TimeInterval = 0, completion: @escaping (String) -> Void) {
         let source = """
         set js to "\(Self.appleScriptString(js))"
         tell application id "\(browser.bundleID)"
@@ -480,17 +574,21 @@ final class BrowserSource: NowPlayingSource {
             return \(browser.runJS)
         end tell
         """
-        let site = tab.site
-        queue.async {
+        queue.asyncAfter(deadline: .now() + delay) {
             var error: NSDictionary?
-            let text = NSAppleScript(source: source)?.executeAndReturnError(&error).stringValue ?? "[]"
-            let raw = (try? JSONSerialization.jsonObject(with: Data(text.utf8)) as? [[String: Any]]) ?? []
-            let lists = raw.compactMap { r -> Playlist? in
-                guard let id = r["id"] as? String, let title = r["t"] as? String, !title.isEmpty else { return nil }
-                let img = (r["img"] as? String).flatMap { $0.hasPrefix("http") ? URL(string: $0) : nil }
-                return Playlist(id: id, title: title, subtitle: r["s"] as? String ?? "", artwork: img, site: site.displayName)
-            }
-            DispatchQueue.main.async { completion(lists) }
+            let text = NSAppleScript(source: source)?.executeAndReturnError(&error).stringValue ?? ""
+            DispatchQueue.main.async { completion(text) }
+        }
+    }
+
+    /// Collects (and clears) a result a page script parks in an attribute on <html>,
+    /// looking every 0.4 s while it isn't there yet.
+    private func collect(_ attribute: String, in tab: Tab, attempts: Int, completion: @escaping (String) -> Void) {
+        guard attempts > 0 else { return completion("") }
+        let js = "(function(){ var r = document.documentElement, v = r.getAttribute('\(attribute)'); if (v !== null) r.removeAttribute('\(attribute)'); return v || '' })()"
+        evaluate(js, in: tab, after: 0.4) { [weak self] text in
+            guard text.isEmpty else { return completion(text) }
+            self?.collect(attribute, in: tab, attempts: attempts - 1, completion: completion)
         }
     }
 
@@ -500,6 +598,14 @@ final class BrowserSource: NowPlayingSource {
     func fetchSongs(of playlist: Playlist, completion: @escaping ([PlaylistSong]) -> Void) {
         guard let tab = musicTab, tab.pageAccess else { return completion([]) }
         let key = playlist.id.replacingOccurrences(of: "'", with: "")
+        // Chrome: the playlist's own page, which needs nothing from the page's objects.
+        if browser == .chrome {
+            let attribute = "data-brimtune-songs-\(key)"
+            let start = Self.embeddedDataJS(path: "/playlist?list=\(key)", attribute: attribute, visit: Self.songVisitJS)
+            return evaluate(start, in: tab) { [weak self] _ in
+                self?.collect(attribute, in: tab, attempts: 25) { completion(Self.songs(from: $0)) }
+            }
+        }
         let start = """
         (function(){
           var a = document.querySelector('ytmusic-app'), nm = a && (a.networkManager || a.networkManager_);
@@ -545,12 +651,7 @@ final class BrowserSource: NowPlayingSource {
                 DispatchQueue.main.async { self?.poll(key: key, tab: tab, attempts: attempts - 1, completion: completion) }
                 return
             }
-            let raw = (try? JSONSerialization.jsonObject(with: Data(text.utf8)) as? [[String: Any]]) ?? []
-            let songs = raw.compactMap { r -> PlaylistSong? in
-                guard let id = r["v"] as? String, let title = r["t"] as? String else { return nil }
-                return PlaylistSong(id: id, title: title, artist: r["a"] as? String ?? "", duration: r["d"] as? String ?? "",
-                                    artwork: (r["img"] as? String).flatMap(URL.init(string:)))
-            }
+            let songs = Self.songs(from: text)
             DispatchQueue.main.async { completion(songs) }
         }
     }
