@@ -82,7 +82,7 @@ apply afterwards.
 
 ## 10. Governing law
 
-These terms are governed by the laws of [Ukraine], without regard to conflict-of-law
+These terms are governed by the laws of Ukraine, without regard to conflict-of-law
 rules. If you're a consumer, you also keep the protection of the mandatory laws of the
 country where you live.
 
