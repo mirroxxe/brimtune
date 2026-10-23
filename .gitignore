@@ -1,0 +1,8 @@
+# Build output (rebuilt by build.sh)
+.build/
+*.app
+*.dmg
+.swiftpm/
+
+# macOS
+.DS_Store

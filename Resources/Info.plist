@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleName</key>
+    <string>Brimtune</string>
+    <key>CFBundleDisplayName</key>
+    <string>Brimtune</string>
+    <key>CFBundleIdentifier</key>
+    <string>app.brimtune.mac</string>
+    <key>CFBundleExecutable</key>
+    <string>Brimtune</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>CFBundleShortVersionString</key>
+    <string>1.0</string>
+    <key>CFBundleVersion</key>
+    <string>1</string>
+    <key>LSMinimumSystemVersion</key>
+    <string>14.0</string>
+    <key>LSUIElement</key>
+    <true/>
+    <key>NSHighResolutionCapable</key>
+    <true/>
+    <key>NSAppleEventsUsageDescription</key>
+    <string>Brimtune reads what Music and Spotify are playing and sends play, pause and skip.</string>
+    <key>CFBundleIconFile</key>
+    <string>AppIcon</string>
+    <key>NSCalendarsFullAccessUsageDescription</key>
+    <string>Brimtune shows a countdown in the island before your next meeting.</string>
+    <key>NSAudioCaptureUsageDescription</key>
+    <string>Brimtune listens to what your Mac is playing so the waveform moves with the music. Audio never leaves your Mac.</string>
+    <key>NSBluetoothAlwaysUsageDescription</key>
+    <string>Brimtune shows the battery level of your AirPods when they connect.</string>
+</dict>
+</plist>
