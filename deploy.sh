@@ -21,7 +21,8 @@ if [[ -f dist.noindex/Brimtune.dmg ]]; then
     cp dist.noindex/Brimtune.dmg "$OUT/"
     cp dist.noindex/appcast.xml "$OUT/"
     mkdir -p "$OUT/updates"
-    cp dist.noindex/updates/* "$OUT/updates/"
+    # Files only: Sparkle parks superseded deltas in updates/old_updates/.
+    find dist.noindex/updates -maxdepth 1 -type f -exec cp {} "$OUT/updates/" \;
 else
     echo "warning: no release in dist.noindex/ — run ./release.sh first; the Download button will 404" >&2
 fi
