@@ -97,7 +97,14 @@ final class NowPlayingCenter: ObservableObject {
         // Ignore a stale reading that would undo a tap the user just made.
         if Date() < optimisticUntil, entry.snapshot.id == track?.id { return }
 
+        let previousBrowser = activeSource as? BrowserSource
         activeSource = source
+        // Playlists belong to the browser (and account) the music is in.
+        if let browser = source as? BrowserSource, previousBrowser != nil, browser !== previousBrowser {
+            playlists = []
+            playlistSongs = [:]
+            refreshPlaylists()
+        }
         var next = entry.snapshot
         if let current = track, current.id == next.id, current.liked != nil, next.liked == nil {
             next.liked = current.liked
@@ -189,7 +196,7 @@ final class NowPlayingCenter: ObservableObject {
 
     func refreshPlaylists() {
         playlistsFetchedAt = Date()
-        guard let browser = sources.lazy.compactMap({ $0 as? BrowserSource }).first(where: \.hasPageAccess) else { return }
+        guard let browser = followedBrowser else { return }
         browser.fetchPlaylists { [weak self] lists in
             guard let self, !lists.isEmpty else { return }
             let withCovers = lists.map { list -> Playlist in
@@ -232,7 +239,18 @@ final class NowPlayingCenter: ObservableObject {
     var browserHasPageAccess: Bool { followedBrowser != nil }
 
     private var followedBrowser: BrowserSource? {
-        sources.lazy.compactMap { $0 as? BrowserSource }.first(where: \.hasPageAccess)
+        browsers.first(where: \.hasPageAccess)
+    }
+
+    /// Safari and Chrome, the one playing (or played last) first. Both can have a YouTube
+    /// Music tab open, and search, playlists and songs belong in the one you listen in.
+    private var browsers: [BrowserSource] {
+        sources.compactMap { $0 as? BrowserSource }.sorted { a, b in
+            if a === activeSource { return true }
+            if b === activeSource { return false }
+            let played = { (s: BrowserSource) in self.entries[ObjectIdentifier(s)]?.lastPlayed ?? .distantPast }
+            return played(a) > played(b)
+        }
     }
 
     func loadSongs(for playlist: Playlist, force: Bool = false) {
@@ -254,7 +272,7 @@ final class NowPlayingCenter: ObservableObject {
 
     /// The browser holding a YouTube Music tab, playing or not.
     private var musicBrowser: BrowserSource? {
-        sources.lazy.compactMap { $0 as? BrowserSource }.first(where: \.followsYouTubeMusic)
+        browsers.first(where: \.followsYouTubeMusic)
     }
 
     func play(_ song: PlaylistSong, in playlist: Playlist) {
@@ -275,8 +293,8 @@ final class NowPlayingCenter: ObservableObject {
 
     /// Plays a searched song in the YouTube Music tab being followed, or opens it.
     func play(_ result: SearchResult) {
-        if let tab = sources.lazy.compactMap({ $0 as? BrowserSource }).first(where: \.followsYouTubeMusic) {
-            tab.playInYouTubeMusic(videoID: result.id, playlistID: nil)
+        if let browser = musicBrowser {
+            browser.playInYouTubeMusic(videoID: result.id, playlistID: nil)
         } else {
             NSWorkspace.shared.open(result.youTubeMusicURL)
         }
