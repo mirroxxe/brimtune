@@ -56,6 +56,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             .sink { [weak self] _ in DispatchQueue.main.async { self?.rebuildIslands() } }
             .store(in: &cancellables)
 
+        // macOS naps apps none of whose windows can be seen, which on the lock screen is all of
+        // Brimtune's: reading the player slows to a crawl, so skips, track changes and lyrics
+        // lag far behind. Stay awake while music plays and while the lock-screen player is up.
+        center.$track.combineLatest(lock.$isLocked)
+            .map { track, locked in track?.isPlaying == true || (locked && track != nil) }
+            .removeDuplicates()
+            .sink { [weak self] awake in self?.keepAwake(awake) }
+            .store(in: &cancellables)
+
         // The audio tap only runs while music plays, so the recording indicator isn't on all day.
         // Exception: a title-only browser tab can't report "resumed", so after a pause the tap
         // keeps listening for a while to hear the music come back.
@@ -113,6 +122,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             return island
         }
         applyFullScreen(preferences.hideInFullScreen ? fullScreen.fullScreenFrames : [])
+    }
+
+    private var awakeActivity: NSObjectProtocol?
+
+    private func keepAwake(_ awake: Bool) {
+        if awake, awakeActivity == nil {
+            // Keeps App Nap away; the Mac can still sleep when idle.
+            awakeActivity = ProcessInfo.processInfo.beginActivity(
+                options: .userInitiatedAllowingIdleSystemSleep, reason: "Following the music that's playing")
+        } else if !awake, let activity = awakeActivity {
+            ProcessInfo.processInfo.endActivity(activity)
+            awakeActivity = nil
+        }
     }
 
     private func applyFullScreen(_ frames: [CGRect]) {

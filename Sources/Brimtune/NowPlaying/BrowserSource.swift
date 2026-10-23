@@ -32,6 +32,13 @@ final class BrowserSource: NowPlayingSource {
             }
         }
 
+        var name: String {
+            switch self {
+            case .safari: "Safari"
+            case .chrome: "Chrome"
+            }
+        }
+
         var tabTitle: String {
             switch self {
             case .safari: "name of t"
@@ -104,9 +111,15 @@ final class BrowserSource: NowPlayingSource {
 
     private var lastScan = Date.distantPast
     private var lastScanPlaying = false
+    private var lastTick = Date()
+    private var lastErrorLog = Date.distantPast
 
     /// Scans every 1.5 s while music plays (position, lyrics), every 5 s otherwise.
     private func tick() {
+        // A timer this late means macOS has been napping the app (see AppDelegate.keepAwake).
+        let gap = Date().timeIntervalSince(lastTick)
+        lastTick = Date()
+        if lastScanPlaying, gap > 6 { NSLog("Brimtune: %@ check ran %.0f s late", browser.name, gap) }
         guard lastScanPlaying || Date().timeIntervalSince(lastScan) > 5 else { return }
         refresh()
     }
@@ -121,6 +134,10 @@ final class BrowserSource: NowPlayingSource {
             guard let self, self.isRunning, let script = self.scanScript else { return }
             var error: NSDictionary?
             let output = script.executeAndReturnError(&error).stringValue ?? ""
+            if let error, Date().timeIntervalSince(self.lastErrorLog) > 60 {
+                self.lastErrorLog = Date()
+                NSLog("Brimtune: reading %@ failed: %@", self.browser.name, error[NSAppleScript.errorNumber] as? NSNumber ?? -1)
+            }
             let found = error == nil ? self.parse(output) : nil
             // A title-only song is held back until its catalog lookup lands, so it appears once, complete.
             if self.lookupPending { self.lookupPending = false; return }
@@ -726,7 +743,11 @@ final class BrowserSource: NowPlayingSource {
             js = "var e=document.querySelectorAll('ytmusic-player-queue-item')[\(index)]; if(e){var b=e.querySelector('ytmusic-play-button-renderer'); (b||e).click()}"
         case (.spotify, .playQueueItem), (_, .like): return
         }
-        run(js, in: tab)
+        NSLog("Brimtune: sending %@ to %@", String(describing: command), browser.name)
+        evaluate(js + "; 'ok'", in: tab) { [weak self] result in
+            if result != "ok" { NSLog("Brimtune: %@ didn't take %@", self?.browser.name ?? "", String(describing: command)) }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) { self?.refresh() }
+        }
     }
 
     func seek(to seconds: TimeInterval) {
