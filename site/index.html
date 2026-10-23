@@ -16,6 +16,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wght@0,300..900;1,300..900&family=Geist:wght@300;400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/styles.css">
+  <!-- Where "Buy me a coffee" goes. While it's empty, Download downloads straight away. -->
+  <meta name="brimtune-donate" content="">
   <script>document.documentElement.classList.add("js");</script>
 </head>
 <body>
@@ -381,10 +383,35 @@
     <p class="legal">Not affiliated with Apple, Google, YouTube or Spotify. Their names are trademarks of their owners.</p>
   </footer>
 
+  <!-- Before the download: Brimtune is free, and a coffee is welcome. -->
+  <dialog class="getit" id="getit" aria-labelledby="getit-title">
+    <div class="getit-order">
+      <p class="getit-brand"><img src="/assets/icon-256.png" width="28" height="28" alt="">Brimtune</p>
+      <p class="getit-kicker">Pay what you want</p>
+      <p class="getit-price">€0.00</p>
+      <ul class="getit-lines">
+        <li><img src="/assets/icon-256.png" width="40" height="40" alt=""><span><strong>Brimtune for Mac</strong><small>Apple silicon and Intel, macOS 14+</small></span><em>Free</em></li>
+        <li class="getit-sub"><span>Updates, forever</span><em>Free</em></li>
+        <li class="getit-sub"><span>Account, ads, tracking</span><em>None</em></li>
+        <li class="getit-total"><span>Total due</span><em>€0.00</em></li>
+      </ul>
+    </div>
+    <div class="getit-choose">
+      <button type="button" class="getit-close" aria-label="Close" data-getit-close>×</button>
+      <h2 id="getit-title">Brimtune is <em>free.</em></h2>
+      <p>Made by one person in Ukraine, in the evenings. If it makes your days a little better, a coffee keeps it going. If not, it's yours anyway.</p>
+      <a class="getit-coffee" data-getit-donate href="#" target="_blank" rel="noopener"><span aria-hidden="true">☕</span> Buy me a coffee &amp; download</a>
+      <p class="getit-or"><span>or</span></p>
+      <a class="button getit-free" data-getit-free href="/Brimtune.dmg" download>Download for free</a>
+      <p class="getit-done" hidden>Your download has started. Next: open the file and drag Brimtune into Applications. <a href="#install" data-getit-close>How to install</a></p>
+    </div>
+  </dialog>
+
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js" defer></script>
   <script src="/island.js" defer></script>
   <script src="/motion.js" defer></script>
+  <script src="/download.js" defer></script>
 </body>
 </html>

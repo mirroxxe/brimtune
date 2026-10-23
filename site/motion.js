@@ -18,6 +18,7 @@
   if (!reduced && Lenis) {
     lenis = new Lenis({ lerp: 0.1 });
     lenis.on("scroll", ScrollTrigger.update);
+    window.brimtuneLenis = lenis;
     gsap.ticker.add((time) => lenis.raf(time * 1000));
     gsap.ticker.lagSmoothing(0);
   }
@@ -26,7 +27,16 @@
       const target = document.querySelector(link.getAttribute("href"));
       if (!target) return;
       e.preventDefault();
-      lenis ? lenis.scrollTo(target, { duration: 1.6 }) : target.scrollIntoView();
+      if (!lenis) return target.scrollIntoView();
+      // A link in the download dialog: scrolling was paused behind it. Lenis.start() resets
+      // any scroll in flight, so resume before starting this one, not after.
+      if (lenis.isStopped) lenis.start();
+      // Long jumps get more time, so the page glides past the scenes instead of flashing by.
+      const distance = Math.abs(target.getBoundingClientRect().top);
+      lenis.scrollTo(target, {
+        duration: clamp(distance / 5000, 1.1, 3),
+        easing: (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2),
+      });
     });
   });
 

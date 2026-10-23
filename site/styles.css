@@ -542,6 +542,62 @@ p { margin: 0 0 1rem; }
 .closing .fineprint { color: color-mix(in srgb, var(--moon) 60%, transparent); }
 .wordmark { position: relative; margin: 0; text-align: center; font: 700 25vw/.74 var(--display); letter-spacing: -.06em; color: transparent; background: linear-gradient(180deg, rgba(255, 255, 255, .22), rgba(255, 255, 255, .03)); -webkit-background-clip: text; background-clip: text; transform: translateY(12%); user-select: none; }
 
+/* ---------- Download: "it's free, a coffee is welcome" ---------- */
+
+.getit {
+  width: min(58rem, calc(100vw - 2rem)); max-height: calc(100svh - 2rem); padding: 0; border: 0; border-radius: 28px;
+  display: grid; grid-template-columns: 1fr 1.05fr; overflow: auto;
+  background: var(--card); color: var(--ink); box-shadow: 0 60px 120px -40px rgba(14, 11, 24, .6);
+}
+.getit:not([open]) { display: none; }
+.getit::backdrop { background: rgba(14, 11, 24, .45); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
+.getit[open] { animation: getit-in .45s var(--spring); }
+.getit[open]::backdrop { animation: fade-in .3s ease; }
+@keyframes getit-in { from { opacity: 0; transform: translateY(24px) scale(.97); } }
+@keyframes fade-in { from { opacity: 0; } }
+
+.getit-order { padding: 2.2rem 2.4rem; background: var(--paper); border-right: 1px solid var(--line); }
+.getit-brand { display: flex; align-items: center; gap: .6rem; margin: 0 0 2.4rem; font: 600 1rem/1 var(--text); }
+.getit-brand img { border-radius: 7px; }
+.getit-kicker { margin: 0; color: var(--slate); font-size: 1rem; }
+.getit-price { margin: .2rem 0 2rem; font: 800 clamp(2.6rem, 5vw, 3.4rem)/1 var(--display); letter-spacing: -.04em; }
+.getit-lines { list-style: none; margin: 0; padding: 0; font-size: .95rem; }
+.getit-lines li { display: flex; align-items: center; gap: .9rem; padding: .85rem 0; border-top: 1px solid var(--line); }
+.getit-lines li:first-child { border-top: 0; padding-top: 0; }
+.getit-lines li img { border-radius: 10px; flex: none; }
+.getit-lines span { flex: 1; display: flex; flex-direction: column; }
+.getit-lines small { color: var(--slate); font-size: .82rem; }
+.getit-lines em { font-style: normal; font-weight: 500; }
+.getit-sub { padding-left: calc(40px + .9rem) !important; color: var(--slate); }
+.getit-sub em { color: var(--ink); }
+.getit-total { font-weight: 600; font-size: 1.05rem; }
+
+.getit-choose { position: relative; padding: 2.6rem 2.4rem 2.2rem; display: flex; flex-direction: column; justify-content: center; }
+.getit-close { position: absolute; top: 1rem; right: 1rem; width: 36px; height: 36px; border: 0; border-radius: 50%; background: var(--mist); color: var(--ink); font: 400 1.4rem/1 var(--text); cursor: pointer; }
+.getit-close:hover { background: #e2ddeb; }
+.getit h2 { font-size: clamp(2.2rem, 4vw, 3rem); line-height: .95; letter-spacing: -.04em; margin: 0 0 1rem; }
+.getit-choose > p { color: var(--slate); margin: 0 0 1.6rem; }
+.getit-coffee {
+  display: flex; align-items: center; justify-content: center; gap: .6rem; padding: 1.05rem 1.4rem; border-radius: 999px;
+  background: #FFDD00; color: #16121F; font: 600 1.05rem/1 var(--text); text-decoration: none;
+  transition: transform .25s var(--spring), box-shadow .3s var(--settle);
+}
+.getit-coffee:hover { transform: translateY(-1px); box-shadow: 0 12px 30px -12px rgba(200, 160, 0, .7); }
+.getit-or { display: flex; align-items: center; gap: .8rem; margin: 1rem 0 !important; color: var(--slate); font-size: .85rem; }
+.getit-or::before, .getit-or::after { content: ""; flex: 1; border-top: 1px solid var(--line); }
+.getit-free { justify-content: center; }
+.getit-done { margin: 1.2rem 0 0 !important; padding: .9rem 1rem; border-radius: 14px; background: color-mix(in srgb, #46A758 12%, white); color: var(--ink) !important; font-size: .92rem; }
+.getit-done a { font-weight: 600; }
+
+@media (max-width: 760px) {
+  .getit { grid-template-columns: 1fr; border-radius: 22px; }
+  .getit-order { padding: 1.4rem 1.4rem 1.2rem; border-right: 0; border-bottom: 1px solid var(--line); }
+  .getit-brand { margin-bottom: 1.2rem; }
+  .getit-price { margin-bottom: 1rem; }
+  .getit-sub { display: none !important; }
+  .getit-choose { position: static; padding: 1.6rem 1.4rem 1.4rem; }
+}
+
 /* ---------- Footer ---------- */
 
 .footer { max-width: 96rem; margin: 0 auto; padding: 2.5rem var(--gutter) 3.5rem; display: flex; flex-wrap: wrap; gap: .75rem 2rem; align-items: baseline; border-top: 1px solid var(--line); font-size: .9rem; color: var(--slate); }
