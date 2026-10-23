@@ -2,47 +2,47 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-    <key>CFBundleName</key>
-    <string>Brimtune</string>
-    <key>CFBundleDisplayName</key>
-    <string>Brimtune</string>
-    <key>CFBundleIdentifier</key>
-    <string>app.brimtune.mac</string>
-    <key>CFBundleExecutable</key>
-    <string>Brimtune</string>
-    <key>CFBundlePackageType</key>
-    <string>APPL</string>
-    <key>CFBundleShortVersionString</key>
-    <string>1.0.0</string>
-    <key>CFBundleVersion</key>
-    <string>1</string>
-    <key>NSHumanReadableCopyright</key>
-    <string>© 2026 Volodymyr Chuchman</string>
-    <key>LSApplicationCategoryType</key>
-    <string>public.app-category.music</string>
-    <key>SUFeedURL</key>
-    <string>https://brimtune.pages.dev/appcast.xml</string>
-    <key>SUPublicEDKey</key>
-    <string>RKHa6mYgMlngrky9Szs6Kyzh+yIkK1VddsTOai2Wb/c=</string>
-    <key>SUEnableAutomaticChecks</key>
-    <true/>
-    <key>SUScheduledCheckInterval</key>
-    <integer>86400</integer>
-    <key>LSMinimumSystemVersion</key>
-    <string>14.0</string>
-    <key>LSUIElement</key>
-    <true/>
-    <key>NSHighResolutionCapable</key>
-    <true/>
-    <key>NSAppleEventsUsageDescription</key>
-    <string>Brimtune reads what Music and Spotify are playing and sends play, pause and skip.</string>
-    <key>CFBundleIconFile</key>
-    <string>AppIcon</string>
-    <key>NSCalendarsFullAccessUsageDescription</key>
-    <string>Brimtune shows a countdown in the island before your next meeting.</string>
-    <key>NSAudioCaptureUsageDescription</key>
-    <string>Brimtune listens to what your Mac is playing so the waveform moves with the music. Audio never leaves your Mac.</string>
-    <key>NSBluetoothAlwaysUsageDescription</key>
-    <string>Brimtune shows the battery level of your AirPods when they connect.</string>
+	<key>CFBundleDisplayName</key>
+	<string>Brimtune</string>
+	<key>CFBundleExecutable</key>
+	<string>Brimtune</string>
+	<key>CFBundleIconFile</key>
+	<string>AppIcon</string>
+	<key>CFBundleIdentifier</key>
+	<string>app.brimtune.mac</string>
+	<key>CFBundleName</key>
+	<string>Brimtune</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>1.0.1</string>
+	<key>CFBundleVersion</key>
+	<string>2</string>
+	<key>LSApplicationCategoryType</key>
+	<string>public.app-category.music</string>
+	<key>LSMinimumSystemVersion</key>
+	<string>14.0</string>
+	<key>LSUIElement</key>
+	<true/>
+	<key>NSAppleEventsUsageDescription</key>
+	<string>Brimtune reads what Music and Spotify are playing and sends play, pause and skip.</string>
+	<key>NSAudioCaptureUsageDescription</key>
+	<string>Brimtune listens to what your Mac is playing so the waveform moves with the music. Audio never leaves your Mac.</string>
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>Brimtune shows the battery level of your AirPods when they connect.</string>
+	<key>NSCalendarsFullAccessUsageDescription</key>
+	<string>Brimtune shows a countdown in the island before your next meeting.</string>
+	<key>NSHighResolutionCapable</key>
+	<true/>
+	<key>NSHumanReadableCopyright</key>
+	<string>© 2026 Volodymyr Chuchman</string>
+	<key>SUEnableAutomaticChecks</key>
+	<true/>
+	<key>SUFeedURL</key>
+	<string>https://brimtune.pages.dev/appcast.xml</string>
+	<key>SUPublicEDKey</key>
+	<string>RKHa6mYgMlngrky9Szs6Kyzh+yIkK1VddsTOai2Wb/c=</string>
+	<key>SUScheduledCheckInterval</key>
+	<integer>86400</integer>
 </dict>
 </plist>
