@@ -5,6 +5,13 @@
   const root = document.documentElement;
   const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
+  // The tour's big island is a copy of this one: same views, driven by the same clock.
+  const tourIsland = document.querySelector(".tour-island");
+  if (tourIsland) {
+    tourIsland.innerHTML = island.innerHTML;
+    tourIsland.inert = true;
+  }
+
   // Made-up songs with made-up covers: three moods, three palettes.
   const tracks = [
     { title: "Night Bus Home", artist: "Lumen Field", length: 202, colors: ["#F2648E", "#7C6CF2", "#FFAE57"] },
@@ -18,13 +25,14 @@
   let sectionState = "compact";
   let hovering = false;
 
-  const $ = (sel) => island.querySelectorAll(sel);
+  const $ = (sel) => document.querySelectorAll(sel);
   const clock = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
 
   function render() {
     const state = hovering && ["compact", "idle", "expanded", "lyric", "timer"].includes(sectionState) ? "expanded" : sectionState;
     island.dataset.state = state;
     island.dataset.playing = String(playing);
+    if (tourIsland) tourIsland.dataset.playing = String(playing);
   }
 
   function showTrack(i, { shimmer = true } = {}) {
@@ -108,7 +116,7 @@
 
   // Lyrics: every karaoke block lights its words in turn, on one shared clock;
   // the island echoes the current line.
-  const islandLine = island.querySelector(".island-line");
+  const islandLines = $(".island-line");
   const blocks = [...document.querySelectorAll("[data-karaoke]")].map((block) => {
     const lines = [...block.querySelectorAll("[data-line]")];
     const words = lines.map((line) => {
@@ -134,7 +142,7 @@
     for (const { lines, words, visible } of blocks) {
       if (reducedMotion) { words.flat().forEach((w) => w.style.setProperty("--p", 1)); continue; }
       // Off-screen blocks rest, except the one the island is echoing.
-      const echoed = lines === blocks[0].lines && sectionState === "lyric";
+      const echoed = lines === blocks[0].lines && (sectionState === "lyric" || tourIsland?.dataset.state === "lyric");
       if (!visible && !echoed) continue;
       const lineLength = (i) => words[i].length * wordTime + lineGap;
       const cycle = lines.reduce((sum, _, i) => sum + lineLength(i), 0);
@@ -148,8 +156,8 @@
           w.style.setProperty("--p", p.toFixed(3));
         });
       });
-      if (blocks[0].lines === lines && islandLine.textContent !== lines[current].textContent) {
-        islandLine.textContent = lines[current].textContent;
+      if (blocks[0].lines === lines && islandLines[0].textContent !== lines[current].textContent) {
+        islandLines.forEach((el) => (el.textContent = lines[current].textContent));
       }
     }
   }
@@ -165,7 +173,7 @@
     if (playing) {
       position = Math.min(position + dt, tracks[trackIndex].length);
       updateProgress();
-      if (lyricsVisible() || sectionState === "lyric") lyricClock += dt;
+      if (lyricsVisible() || sectionState === "lyric" || tourIsland?.dataset.state === "lyric") lyricClock += dt;
     }
     timerLeft = timerLeft > 0 ? timerLeft - dt : 25 * 60;
     countdowns.forEach((el) => (el.textContent = clock(timerLeft)));

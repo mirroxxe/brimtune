@@ -62,24 +62,26 @@ wallpaper, music-video clip player, volume HUD.
 
 Static HTML/CSS/JS, no framework. `index.html`, `styles.css`, `island.js` (live demo island fixed
 at the top: hover opens the player, scroll switches small states, made-up tracks recolour the
-page), `build-pages.mjs` + `doc-template.html` render privacy/terms/licenses/changelog.
+page), `motion.js` (scroll scenes), `build-pages.mjs` + `doc-template.html` render privacy/terms/licenses/changelog.
 Fonts: Bricolage Grotesque (display) + Geist (text). Colours: night #0E0B18, lilac paper #F1EEF6,
 ink #16121F, accents rose #F2648E, iris #7C6CF2, amber #FFAE57. Use made-up songs/covers/lyrics
 only (no real copyrighted ones).
 
-### Next task: redesign the site again
+### Current design (October 2026)
 
-The user found the current version (Canopy-like structure, commit 9fc7cc1) "empty". New
-reference: **https://recent.design/i/erz4438-augen** (the site augen.pro): minimal and clean,
-white, a huge full-bleed hero visual, very large type, long scrolling, smooth scroll (Lenis) and
-scroll-driven animations (GSAP). Keep Canopy's section order (hero → lock screen → quiet by
-design → the rest of the features → the idea → install → FAQ → closing) and show most features,
-but make it fuller and richer, with smooth scroll-linked animation. Make it Brimtune's own, not a
-copy. Check it on desktop (1440×900) and phone (375×812) in the browser before committing.
+White, minimal, huge type, long scroll, inspired by augen.pro (recent.design/i/erz4438-augen) but
+our own. `motion.js` drives it with Lenis 1.1.13 (smooth scroll) + GSAP/ScrollTrigger 3.12.5 from
+CDNs; without GSAP the page falls back to a static layout (`html.motion` gates the pinned CSS);
+reduced motion = no smooth scroll, scenes flip instead of scrub. Scenes: hero screen shrinks into a
+MacBook on its lock screen → "Quiet by design" (words sharpen, counters) → pinned tour where a big
+copy of the island (cloned in `island.js`) morphs through 8 features → full-screen player whose
+lyrics are sung by the scroll + live waveform → sideways cards (history, displays, menu bar,
+updates, free) → "The idea" + scrubbed marquee → install with a Privacy & Security mock → FAQ →
+closing with a giant wordmark. Checked at 1440×900 and 375×812.
 
 ## Remaining release plan
 
-1. Redesign the site (above). 2. User creates a free Cloudflare account → `npx wrangler login`
+1. ~~Redesign the site~~ (done). 2. User creates a free Cloudflare account → `npx wrangler login`
 → `./release.sh` (if the app changed) → `./deploy.sh`. 3. Test on a fresh macOS user account.
 4. Screen recordings for the site. 5. Launch: Product Hunt, r/macapps, X/Threads, UA Telegram.
 6. Back up both signing keys.
