@@ -1,11 +1,14 @@
-// Renders Resources/AppIcon.icns: a dark squircle with a glowing island holding
-// a cover and waveform. Run: swift Tools/make-icon.swift
+// Renders the app icon: a cream block "B" on a black squircle. Its counters are a tweeter and a
+// woofer, and a notch is cut into its top edge. Run:
+//   swift Tools/make-icon.swift icon_1024.png
+// then build Resources/AppIcon.icns with sips + iconutil and copy sizes to site/assets.
 import AppKit
 
 let S: CGFloat = 1024
 let image = NSImage(size: NSSize(width: S, height: S))
 image.lockFocus()
 let ctx = NSGraphicsContext.current!.cgContext
+let cream = NSColor(red: 0.925, green: 0.906, blue: 0.871, alpha: 1)
 
 // Squircle body on Apple's 824pt grid.
 let body = CGRect(x: 100, y: 100, width: 824, height: 824)
@@ -18,46 +21,42 @@ ctx.restoreGState()
 
 ctx.saveGState()
 squircle.addClip()
-NSGradient(colors: [NSColor(red: 0.10, green: 0.11, blue: 0.20, alpha: 1), NSColor(red: 0.02, green: 0.02, blue: 0.05, alpha: 1)])!
+NSGradient(colors: [NSColor(red: 0.09, green: 0.08, blue: 0.11, alpha: 1), NSColor(red: 0.03, green: 0.03, blue: 0.04, alpha: 1)])!
     .draw(in: body, angle: -90)
-// Album-colour aurora.
-func blob(_ c: NSColor, _ x: CGFloat, _ y: CGFloat, _ r: CGFloat) {
-    NSGradient(colors: [c.withAlphaComponent(0.85), c.withAlphaComponent(0)])!
-        .draw(fromCenter: NSPoint(x: x, y: y), radius: 0, toCenter: NSPoint(x: x, y: y), radius: r, options: [])
+
+// The "B": square on the left, rounded bowls on the right (the upper one narrower),
+// a wedge between the bowls, and a notch in the top edge.
+let b = NSBezierPath()
+b.move(to: NSPoint(x: 262, y: 262))
+b.line(to: NSPoint(x: 652, y: 262))
+b.appendArc(withCenter: NSPoint(x: 652, y: 372), radius: 110, startAngle: -90, endAngle: 0)
+b.line(to: NSPoint(x: 762, y: 482))
+b.line(to: NSPoint(x: 608, y: 512))
+b.line(to: NSPoint(x: 732, y: 542))
+b.line(to: NSPoint(x: 732, y: 672))
+b.appendArc(withCenter: NSPoint(x: 642, y: 672), radius: 90, startAngle: 0, endAngle: 90)
+b.line(to: NSPoint(x: 584, y: 762))
+b.line(to: NSPoint(x: 584, y: 744))
+b.appendArc(withCenter: NSPoint(x: 560, y: 744), radius: 24, startAngle: 0, endAngle: -90, clockwise: true)
+b.line(to: NSPoint(x: 464, y: 720))
+b.appendArc(withCenter: NSPoint(x: 464, y: 744), radius: 24, startAngle: -90, endAngle: 180, clockwise: true)
+b.line(to: NSPoint(x: 440, y: 762))
+b.line(to: NSPoint(x: 262, y: 762))
+b.close()
+
+// Counters: the tweeter above, the woofer below.
+let tweeter = NSPoint(x: 520, y: 620), woofer = NSPoint(x: 520, y: 388)
+func circle(_ c: NSPoint, _ r: CGFloat) -> NSBezierPath {
+    NSBezierPath(ovalIn: CGRect(x: c.x - r, y: c.y - r, width: r * 2, height: r * 2))
 }
-blob(NSColor(red: 0.98, green: 0.36, blue: 0.55, alpha: 1), 300, 260, 420)
-blob(NSColor(red: 0.35, green: 0.45, blue: 1.0, alpha: 1), 760, 330, 420)
-blob(NSColor(red: 1.0, green: 0.62, blue: 0.25, alpha: 1), 520, 120, 300)
-// Glass sheen.
-NSGradient(colors: [NSColor.white.withAlphaComponent(0.16), NSColor.white.withAlphaComponent(0)])!
-    .draw(in: CGRect(x: 100, y: 560, width: 824, height: 364), angle: -90)
+b.append(circle(tweeter, 52))
+b.append(circle(woofer, 92))
+b.windingRule = .evenOdd
+cream.setFill(); b.fill()
 
-// The island.
-let island = CGRect(x: 232, y: 600, width: 560, height: 168)
-let pill = NSBezierPath(roundedRect: island, xRadius: 84, yRadius: 84)
-ctx.saveGState()
-let glow = NSShadow(); glow.shadowBlurRadius = 60; glow.shadowOffset = .zero
-glow.shadowColor = NSColor(red: 0.98, green: 0.4, blue: 0.6, alpha: 0.7); glow.set()
-NSColor.black.setFill(); pill.fill()
-ctx.restoreGState()
-NSColor.white.withAlphaComponent(0.10).setStroke(); pill.lineWidth = 3; pill.stroke()
-
-// Cover.
-let cover = CGRect(x: 280, y: 636, width: 96, height: 96)
-let coverPath = NSBezierPath(roundedRect: cover, xRadius: 22, yRadius: 22)
-ctx.saveGState(); coverPath.addClip()
-NSGradient(colors: [NSColor(red: 1.0, green: 0.55, blue: 0.3, alpha: 1), NSColor(red: 0.95, green: 0.25, blue: 0.55, alpha: 1),
-                    NSColor(red: 0.45, green: 0.3, blue: 0.95, alpha: 1)])!.draw(in: cover, angle: -45)
-ctx.restoreGState()
-
-// Waveform.
-let heights: [CGFloat] = [44, 86, 62, 104, 54]
-for (i, h) in heights.enumerated() {
-    let x = 600 + CGFloat(i) * 30
-    let bar = NSBezierPath(roundedRect: CGRect(x: x, y: 684 - h / 2, width: 16, height: h), xRadius: 8, yRadius: 8)
-    NSColor(red: 1.0, green: 0.55 + CGFloat(i) * 0.06, blue: 0.6 + CGFloat(i) * 0.07, alpha: 1).setFill()
-    bar.fill()
-}
+// Dust caps: a cream dot in the tweeter, a rose one in the woofer.
+cream.setFill(); circle(tweeter, 16).fill()
+NSColor(red: 0.949, green: 0.392, blue: 0.557, alpha: 1).setFill(); circle(woofer, 30).fill()
 ctx.restoreGState()
 image.unlockFocus()
 

@@ -63,7 +63,7 @@ wallpaper, music-video clip player, volume HUD.
 Static HTML/CSS/JS, no framework. `index.html`, `styles.css`, `island.js` (live demo island fixed
 at the top: hover opens the player, scroll switches small states, made-up tracks recolour the
 page), `motion.js` (scroll scenes), `build-pages.mjs` + `doc-template.html` render privacy/terms/licenses/changelog.
-Fonts: Bricolage Grotesque (display) + Geist (text). Colours: night #0E0B18, lilac paper #F1EEF6,
+Fonts: Archivo (display, heavy 800 with light italic accents in <em>) + Geist (text). Colours: night #0E0B18, lilac paper #F1EEF6,
 ink #16121F, accents rose #F2648E, iris #7C6CF2, amber #FFAE57. Use made-up songs/covers/lyrics
 only (no real copyrighted ones).
 

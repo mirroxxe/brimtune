@@ -40,17 +40,28 @@
     return ScrollTrigger.create({ trigger, start, end, scrub: 0.6, animation: timeline, invalidateOnRefresh: true });
   }
 
-  // Wraps every word of an element in a span, keeping the spaces.
+  // Wraps every word of an element in a span, keeping the spaces and any inline elements (an <em>).
   function splitWords(el, className) {
-    const words = el.textContent.trim().split(/\s+/);
-    el.textContent = "";
-    return words.map((word, i) => {
-      const span = document.createElement("span");
-      span.className = className;
-      span.textContent = word;
-      el.append(span, i < words.length - 1 ? " " : "");
-      return span;
-    });
+    const spans = [];
+    const walk = (parent) => {
+      [...parent.childNodes].forEach((node) => {
+        if (node.nodeType === Node.ELEMENT_NODE) return walk(node);
+        if (node.nodeType !== Node.TEXT_NODE) return;
+        const parts = document.createDocumentFragment();
+        node.textContent.split(/(\s+)/).forEach((part) => {
+          if (!part) return;
+          if (/^\s+$/.test(part)) return parts.append(part);
+          const span = document.createElement("span");
+          span.className = className;
+          span.textContent = part;
+          spans.push(span);
+          parts.append(span);
+        });
+        node.replaceWith(parts);
+      });
+    };
+    walk(el);
+    return spans;
   }
 
   // ---------- Hero: the screen steps back into a MacBook on its lock screen ----------
