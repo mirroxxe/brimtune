@@ -53,6 +53,16 @@ messages with `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`.
 Measured cost: ~1.5% CPU, 36 MB with music paused. Removed on request: blurred cover as
 wallpaper, music-video clip player, volume HUD.
 
+## Release notes are the public update log (always)
+
+Every change that reaches users ships as a release with `ReleaseNotes/X.Y.Z.html`: an `<h2>Brimtune
+X.Y.Z</h2>` and a `<ul>` of what's new or fixed, written for users (plain English, no internals).
+`./release.sh X.Y.Z` puts them in Sparkle's update window; `./deploy.sh` builds the site's
+`/changelog` ("What's new", dated) and the home page's What's new cards (three newest) from them.
+So after every app change: notes → `./release.sh` → `./deploy.sh` → commit + push. Check the live
+appcast and changelog afterwards. Before releasing, check the live appcast's version: another
+session may have released in parallel (it happened with 1.0.2).
+
 ## Signing & release
 
 - Code signing: self-signed **"Brimtune Developer"** certificate in the login keychain (10 yrs).
