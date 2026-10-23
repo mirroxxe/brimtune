@@ -9,3 +9,6 @@ public.noindex/
 
 # macOS
 .DS_Store
+
+# Wrangler cache
+.wrangler/
