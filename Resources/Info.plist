@@ -20,6 +20,14 @@
     <string>© 2026 Volodymyr Chuchman</string>
     <key>LSApplicationCategoryType</key>
     <string>public.app-category.music</string>
+    <key>SUFeedURL</key>
+    <string>https://brimtune.pages.dev/appcast.xml</string>
+    <key>SUPublicEDKey</key>
+    <string>RKHa6mYgMlngrky9Szs6Kyzh+yIkK1VddsTOai2Wb/c=</string>
+    <key>SUEnableAutomaticChecks</key>
+    <true/>
+    <key>SUScheduledCheckInterval</key>
+    <integer>86400</integer>
     <key>LSMinimumSystemVersion</key>
     <string>14.0</string>
     <key>LSUIElement</key>

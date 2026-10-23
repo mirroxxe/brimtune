@@ -17,6 +17,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var settingsWindow: NSWindow?
     private var historyWindow: NSWindow?
     private var onboarding: OnboardingController!
+    private let updater = Updater()
     private var cancellables: Set<AnyCancellable> = []
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -60,11 +61,32 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             .store(in: &cancellables)
 
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
-        statusItem.button?.image = NSImage(systemSymbolName: "capsule.fill", accessibilityDescription: "Brimtune")
+        statusItem.button?.image = Self.menuBarIcon
         let menu = NSMenu()
         menu.delegate = self
         statusItem.menu = menu
     }
+
+    /// The island in miniature: a pill holding a cover and a few waveform bars.
+    /// A template image, so macOS tints it for light and dark menu bars.
+    private static let menuBarIcon: NSImage = {
+        let image = NSImage(size: NSSize(width: 24, height: 16), flipped: false) { rect in
+            let pill = NSBezierPath(roundedRect: NSRect(x: 0.75, y: 2.75, width: 22.5, height: 10.5), xRadius: 5.25, yRadius: 5.25)
+            pill.lineWidth = 1.5
+            NSColor.black.setStroke()
+            pill.stroke()
+            NSColor.black.setFill()
+            NSBezierPath(roundedRect: NSRect(x: 4, y: 5.5, width: 5, height: 5), xRadius: 1.4, yRadius: 1.4).fill()
+            for (i, h) in [3.0, 6.0, 4.0].enumerated() {
+                let x = 13.5 + Double(i) * 2.4
+                NSBezierPath(roundedRect: NSRect(x: x, y: 8 - h / 2, width: 1.4, height: h), xRadius: 0.7, yRadius: 0.7).fill()
+            }
+            return true
+        }
+        image.isTemplate = true
+        image.accessibilityDescription = "Brimtune"
+        return image
+    }()
 
     /// One island per display: hugging the notch on the built-in screen, floating
     /// iPhone-style on external ones.
@@ -113,6 +135,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         preview.state = lockScreen.isPreviewing ? .on : .off
         menu.addItem(preview)
         menu.addItem(item("Settings…", #selector(openSettings), key: ","))
+        menu.addItem(item("Check for Updates…", #selector(checkForUpdates)))
         menu.addItem(item("Setup Guide…", #selector(openOnboarding)))
         menu.addItem(item("About Brimtune", #selector(showAbout)))
         menu.addItem(.separator())
@@ -134,6 +157,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     @objc private func quit() { NSApp.terminate(nil) }
     @objc private func openHistory() { showHistory() }
     @objc private func openOnboarding() { onboarding.show() }
+    @objc private func checkForUpdates() { updater.checkForUpdates() }
 
     @objc private func showAbout() {
         let credits = NSMutableAttributedString(

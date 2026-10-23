@@ -23,3 +23,20 @@ Apple Development / Developer ID identity in the keychain (override with
 - `Sources/Brimtune/Stage` — full-screen player and lock screen
 - `Sources/Brimtune/Services` — audio, lyrics, search, calendar/timers, lock-screen space, history
 - `Tools/make-icon.swift` — renders `Resources/AppIcon.icns`
+
+## Release
+
+```sh
+./release.sh 1.0.1     # sets the version, builds, makes the DMG and updates the appcast
+```
+
+Output goes to `dist.noindex/`: `Brimtune.dmg` (latest, for the Download button),
+`updates/Brimtune-X.Y.Z.dmg` and `appcast.xml` (Sparkle feed, served from
+`https://brimtune.pages.dev/appcast.xml`). Release notes: `ReleaseNotes/X.Y.Z.html`.
+
+Signing uses two keys that live only in the login keychain; back them up:
+- **"Brimtune Developer"** — self-signed code-signing certificate (Keychain Access → My Certificates).
+- **Sparkle EdDSA private key** — `.build/artifacts/sparkle/Sparkle/bin/generate_keys -x sparkle-key.txt`
+  exports it. Without it no future update can be published.
+
+Needs `brew install create-dmg`.
