@@ -1,5 +1,6 @@
 # Build output (rebuilt by build.sh)
 .build/
+build.noindex/
 *.app
 *.dmg
 .swiftpm/

@@ -7,8 +7,8 @@ screen, playlists, timers, calendar countdowns and AirPods alerts.
 ## Build
 
 ```sh
-./build.sh            # builds and signs Brimtune.app next to this file
-open Brimtune.app
+./build.sh             # builds and signs build.noindex/Brimtune.app
+./build.sh --install   # …and installs it into /Applications, then relaunches
 ```
 
 Requires macOS 14+ and Xcode's Swift toolchain. `build.sh` signs with the first

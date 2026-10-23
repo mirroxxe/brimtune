@@ -131,6 +131,9 @@ final class OnboardingController {
             let status = PermissionStatus(center: center)
             let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 620, height: 520),
                                   styleMask: [.titled, .closable, .fullSizeContentView], backing: .buffered, defer: false)
+            // Always dark, like the island itself: text colours then match the
+            // background whatever the system theme is.
+            window.appearance = NSAppearance(named: .darkAqua)
             window.titlebarAppearsTransparent = true
             window.titleVisibility = .hidden
             window.isMovableByWindowBackground = true
@@ -138,7 +141,7 @@ final class OnboardingController {
             // The blur is the window's own content view, so it always fills the window;
             // SwiftUI sits on top of it.
             let blur = NSVisualEffectView(frame: NSRect(x: 0, y: 0, width: 620, height: 520))
-            blur.material = .sidebar
+            blur.material = .hudWindow
             blur.blendingMode = .behindWindow
             blur.state = .active
             let hosting = NSHostingView(rootView: OnboardingView(
@@ -229,10 +232,19 @@ private struct OnboardingView: View {
         }
         .frame(width: 620, height: 520)
         .background {
-            LinearGradient(colors: [Color.pink.opacity(0.08), .clear, Color.blue.opacity(0.08)],
-                           startPoint: .topLeading, endPoint: .bottomTrailing)
-                .ignoresSafeArea()
+            // The icon's glow: deep night with pink, violet and blue light.
+            ZStack {
+                Color(red: 0.05, green: 0.05, blue: 0.09).opacity(0.72)
+                RadialGradient(colors: [Color(red: 0.98, green: 0.36, blue: 0.55).opacity(0.28), .clear],
+                               center: .bottomLeading, startRadius: 0, endRadius: 420)
+                RadialGradient(colors: [Color(red: 0.35, green: 0.45, blue: 1).opacity(0.26), .clear],
+                               center: .bottomTrailing, startRadius: 0, endRadius: 420)
+                RadialGradient(colors: [Color(red: 1, green: 0.62, blue: 0.25).opacity(0.14), .clear],
+                               center: .bottom, startRadius: 0, endRadius: 300)
+            }
+            .ignoresSafeArea()
         }
+        .environment(\.colorScheme, .dark)
     }
 
     private func go(_ delta: Int) {
