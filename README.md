@@ -40,3 +40,15 @@ Signing uses two keys that live only in the login keychain; back them up:
   exports it. Without it no future update can be published.
 
 Needs `brew install create-dmg`.
+
+## Website
+
+`site/` is the static site for brimtune.pages.dev (Cloudflare Pages). `deploy.sh` builds it
+into `public.noindex/` (legal pages and changelog from `Legal/` and `ReleaseNotes/`, plus
+the latest release from `dist.noindex/`) and publishes it with Wrangler.
+
+```sh
+./deploy.sh --preview   # http://localhost:8899
+npx wrangler login      # once
+./deploy.sh             # publish
+```

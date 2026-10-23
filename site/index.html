@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Brimtune — your notch, playing along</title>
+  <meta name="description" content="Brimtune turns the notch on your Mac into a small stage for your music: cover, controls and word-by-word lyrics, even on the lock screen. Free for macOS.">
+  <meta property="og:title" content="Brimtune — your notch, playing along">
+  <meta property="og:description" content="Cover, controls and word-by-word lyrics in your Mac's notch, even on the lock screen. Free.">
+  <meta property="og:image" content="https://brimtune.pages.dev/assets/icon-512.png">
+  <meta property="og:url" content="https://brimtune.pages.dev/">
+  <meta name="theme-color" content="#0E0B18">
+  <link rel="icon" type="image/png" href="/assets/favicon.png">
+  <link rel="apple-touch-icon" href="/assets/icon-256.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,500..800&family=Geist:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+
+  <!-- The page's top edge plays the MacBook's; the island hangs from it and narrates the scroll. -->
+  <div class="island-rail" aria-hidden="false">
+    <div class="island" id="island" data-state="compact" tabindex="0" role="group" aria-label="Brimtune island demo. Hover or focus to open the player.">
+      <div class="island-body">
+        <div class="view view-compact">
+          <span class="cover cover-sm"></span>
+          <span class="bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+        </div>
+
+        <div class="view view-expanded">
+          <div class="player-row">
+            <span class="cover cover-lg"></span>
+            <div class="track-meta">
+              <strong class="track-title">Night Bus Home</strong>
+              <span class="track-artist">Lumen Field</span>
+            </div>
+            <span class="bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+          </div>
+          <div class="progress"><span class="time-now">1:08</span><span class="bar"><span class="fill"></span></span><span class="time-left">-2:14</span></div>
+          <div class="controls">
+            <button type="button" class="ctl" data-action="prev" aria-label="Previous track"><svg viewBox="0 0 24 24"><path d="M11 7v10l-7-5zm9 0v10l-7-5z"/></svg></button>
+            <button type="button" class="ctl ctl-play" data-action="toggle" aria-label="Pause"><svg class="i-pause" viewBox="0 0 24 24"><path d="M7 5h3.5v14H7zm6.5 0H17v14h-3.5z"/></svg><svg class="i-play" viewBox="0 0 24 24"><path d="M8 5l11 7-11 7z"/></svg></button>
+            <button type="button" class="ctl" data-action="next" aria-label="Next track"><svg viewBox="0 0 24 24"><path d="M13 7v10l7-5zm-9 0v10l7-5z"/></svg></button>
+          </div>
+        </div>
+
+        <div class="view view-lyric">
+          <div class="lyric-top"><span class="cover cover-sm"></span><span class="bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span></div>
+          <p class="island-line">with the windows down</p>
+        </div>
+
+        <div class="view view-timer">
+          <svg class="glyph" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 2h6v2H9zm3 4a8 8 0 1 0 0 16 8 8 0 0 0 0-16zm1 8.6V9h-2v6.4l4.2 2.5 1-1.7z"/></svg>
+          <span class="countdown">24:59</span>
+        </div>
+
+        <div class="view view-alert view-meeting">
+          <span class="alert-icon meeting-icon" aria-hidden="true">23</span>
+          <span class="alert-text"><small>In 5 minutes</small><strong>Design review</strong></span>
+          <span class="join">Join</span>
+        </div>
+
+        <div class="view view-alert view-airpods">
+          <svg class="alert-icon pods" viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 3A3.5 3.5 0 0 0 3 6.5c0 1.6 1 2.9 2.5 3.3V19a1.5 1.5 0 0 0 3 0V6.5A3.5 3.5 0 0 0 6.5 3zm11 0A3.5 3.5 0 0 0 14 6.5V19a1.5 1.5 0 0 0 3 0V9.8c1.5-.4 2.5-1.7 2.5-3.3A3.5 3.5 0 0 0 17.5 3z"/></svg>
+          <span class="alert-text"><small>Connected</small><strong>AirPods Pro</strong></span>
+          <span class="battery"><span class="battery-bar"><span></span></span>82</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="aura" aria-hidden="true"></div>
+
+  <main id="main">
+    <header class="hero" data-island="compact">
+      <img class="hero-icon" src="/assets/icon-256.png" width="72" height="72" alt="">
+      <h1>Your notch,<br>playing along.</h1>
+      <p class="lede">Brimtune turns the notch on your Mac into a small stage for whatever you're listening to: the cover, the controls and the lyrics, right where your eyes already are. It's free.</p>
+      <div class="cta">
+        <a class="button" href="/Brimtune.dmg" download>Download for Mac</a>
+        <p class="fineprint">For macOS 14 or later, on Apple silicon and Intel. About 4 MB.<br><a href="#install">How to install</a></p>
+      </div>
+      <p class="hint" id="hint">Try it: hover the island at the top of this page.</p>
+    </header>
+
+    <section class="chapter" id="listen" data-island="expanded">
+      <h2>Hover, and the song opens up.</h2>
+      <p>Move your pointer to the notch and Brimtune unfolds into a player: cover, progress, play and skip. Move away and it tucks back in. Pause, and it slips quietly into the notch.</p>
+      <p>It follows Apple Music, Spotify, and YouTube Music or Spotify playing in Safari or Chrome. Change tracks and the island briefly takes on the colours of the new cover.</p>
+    </section>
+
+    <section class="chapter chapter-lyrics" id="lyrics" data-island="lyric">
+      <h2>Lyrics, word by word.</h2>
+      <p>Synced lyrics light up as they're sung, on the full-screen player and on the lock screen. Lyrics a little early or late? Click the line being sung and they snap into place.</p>
+      <div class="karaoke" id="karaoke" aria-label="Lyrics demo">
+        <p data-line>We took the long way home</p>
+        <p data-line>with the windows down</p>
+        <p data-line>and the city humming</p>
+        <p data-line>a song we didn't know</p>
+      </div>
+    </section>
+
+    <section class="chapter chapter-lock" id="lock" data-island="compact">
+      <div class="lock-copy">
+        <h2>Before you even sign in.</h2>
+        <p>Lock your Mac and the music stays with you: the cover, the controls, the lyrics and your playlists, sitting quietly under the clock. Pick another playlist without unlocking.</p>
+      </div>
+      <figure class="lockscreen" aria-label="Brimtune on the macOS lock screen">
+        <div class="ls-clock"><span>Friday 23 October</span><strong>9:41</strong></div>
+        <div class="ls-player">
+          <span class="cover ls-cover"></span>
+          <div class="ls-card">
+            <strong class="track-title">Night Bus Home</strong>
+            <span class="track-artist">Lumen Field</span>
+            <span class="bar"><span class="fill"></span></span>
+          </div>
+        </div>
+        <div class="ls-user"><span class="avatar"></span><span>Touch ID or Enter Password</span></div>
+      </figure>
+    </section>
+
+    <section class="chapter chapter-moments" id="moments">
+      <h2>And the little things.</h2>
+      <p>The island isn't only for music. When something needs a moment of your attention, it drops down, says it, and gets out of the way.</p>
+      <ul class="moments">
+        <li data-island="timer"><strong>Timers and a stopwatch</strong>, counting down right next to the cover.</li>
+        <li data-island="meeting"><strong>Your next meeting</strong>, five minutes ahead, with a button to join the call.</li>
+        <li data-island="airpods"><strong>AirPods and headphones</strong>, with their battery, the moment they connect.</li>
+        <li data-island="expanded"><strong>Search and your playlists</strong> from YouTube Music, right in the island.</li>
+      </ul>
+    </section>
+
+    <section class="chapter" id="quiet" data-island="idle">
+      <h2>Quiet when it should be.</h2>
+      <p>Brimtune waits for something to happen instead of constantly checking. With music paused it uses around 1.5% of one processor core and 36 MB of memory.</p>
+      <p>There's no account, no ads and no tracking. What you listen to stays on your Mac, apart from the song details needed to find lyrics and covers. The <a href="/privacy">privacy policy</a> lists exactly what goes where.</p>
+    </section>
+
+    <section class="chapter chapter-install" id="install" data-island="compact">
+      <h2>Install in a minute.</h2>
+      <ol class="steps">
+        <li><strong>Download Brimtune</strong> and open the file.</li>
+        <li><strong>Drag Brimtune into Applications</strong> in the window that appears.</li>
+        <li><strong>Open it.</strong> The first time, macOS may say it can't verify the developer: Brimtune is free and signed by its maker rather than through Apple's paid programme. Open System Settings, go to Privacy &amp; Security, scroll down and click <em>Open Anyway</em>. You only do this once.</li>
+        <li><strong>Follow the setup guide.</strong> It asks for each permission and explains what it's for. Every extra is optional.</li>
+      </ol>
+      <a class="button" href="/Brimtune.dmg" download>Download for Mac</a>
+    </section>
+
+    <section class="chapter chapter-faq" id="faq">
+      <h2>Questions people ask.</h2>
+      <details>
+        <summary>Is it really free?</summary>
+        <p>Yes. No account, no ads, no in-app purchases, no trial.</p>
+      </details>
+      <details>
+        <summary>Does my Mac need a notch?</summary>
+        <p>No. On Macs and external displays without one, Brimtune shows a small floating island at the top centre of the screen, and only when something's playing.</p>
+      </details>
+      <details>
+        <summary>Which music apps work?</summary>
+        <p>The Apple Music and Spotify apps, and YouTube Music or Spotify in Safari or Chrome. For covers, progress, the queue and your playlists from the browser, turn on <em>Allow JavaScript from Apple Events</em>: in Safari it's under Settings, Advanced, "Show features for web developers", then the Developer tab. The setup guide shows you where.</p>
+      </details>
+      <details>
+        <summary>Why does macOS warn me the first time I open it?</summary>
+        <p>Apple only skips that warning for developers in its paid programme. Brimtune is signed by its maker, so macOS asks you to confirm once in Privacy &amp; Security. After that it opens like any other app, and updates keep your permissions.</p>
+      </details>
+      <details>
+        <summary>How do updates work?</summary>
+        <p>Brimtune checks once a day and asks before installing. Every update is signed, and Brimtune installs only updates from its maker. You can also choose "Check for Updates…" in its menu.</p>
+      </details>
+      <details>
+        <summary>How do I remove it?</summary>
+        <p>Choose Quit Brimtune from its menu bar icon, then drag Brimtune from Applications to the Bin. To remove its history too, delete the folder Library/Application Support/Brimtune in your home folder.</p>
+      </details>
+    </section>
+
+    <section class="closing" data-island="compact">
+      <h2>Give your notch something to do.</h2>
+      <a class="button" href="/Brimtune.dmg" download>Download for Mac</a>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>Made in Ukraine by Volodymyr Chuchman.</p>
+    <nav aria-label="Footer">
+      <a href="/changelog">Changelog</a>
+      <a href="/privacy">Privacy</a>
+      <a href="/terms">Terms</a>
+      <a href="mailto:brimtune.support@gmail.com">Support</a>
+    </nav>
+    <p class="legal">Not affiliated with Apple, Google, YouTube or Spotify. Their names are trademarks of their owners.</p>
+  </footer>
+
+  <script src="/island.js" defer></script>
+</body>
+</html>

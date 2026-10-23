@@ -2,6 +2,7 @@
 .build/
 build.noindex/
 dist.noindex/
+public.noindex/
 *.app
 *.dmg
 .swiftpm/

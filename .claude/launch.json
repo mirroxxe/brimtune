@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "site",
+      "runtimeExecutable": "./deploy.sh",
+      "runtimeArgs": ["--preview"],
+      "port": 8899
+    }
+  ]
+}
