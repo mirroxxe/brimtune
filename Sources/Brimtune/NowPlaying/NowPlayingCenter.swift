@@ -227,6 +227,10 @@ final class NowPlayingCenter: ObservableObject {
         }
     }
 
+    /// True once a YouTube Music / Spotify tab answers our JavaScript (Safari's
+    /// "Allow JavaScript from Apple Events" is on).
+    var browserHasPageAccess: Bool { followedBrowser != nil }
+
     private var followedBrowser: BrowserSource? {
         sources.lazy.compactMap { $0 as? BrowserSource }.first(where: \.hasPageAccess)
     }

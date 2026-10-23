@@ -3,8 +3,10 @@
 set -euo pipefail
 cd "${0:A:h}"
 
-swift build -c release
-BIN="$(swift build -c release --show-bin-path)/Brimtune"
+# One binary for both Apple Silicon and Intel Macs.
+ARCHS=(--arch arm64 --arch x86_64)
+swift build -c release "${ARCHS[@]}"
+BIN="$(swift build -c release "${ARCHS[@]}" --show-bin-path)/Brimtune"
 
 APP="Brimtune.app"
 rm -rf "$APP"

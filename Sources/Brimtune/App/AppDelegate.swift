@@ -16,6 +16,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var statusItem: NSStatusItem!
     private var settingsWindow: NSWindow?
     private var historyWindow: NSWindow?
+    private var onboarding: OnboardingController!
     private var cancellables: Set<AnyCancellable> = []
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -33,6 +34,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         stage.onSettings = { [weak self] in self?.showSettings() }
         stage.onHistory = { [weak self] in self?.showHistory() }
         stage.onVisibilityChange = { [weak self] shown in self?.islands.forEach { $0.suppressed = shown } }
+
+        onboarding = OnboardingController(center: center, activities: activities, preferences: preferences)
+        onboarding.showIfNeeded()
 
         rebuildIslands()
         NotificationCenter.default.addObserver(forName: NSApplication.didChangeScreenParametersNotification, object: nil, queue: .main) { [weak self] _ in
@@ -109,6 +113,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         preview.state = lockScreen.isPreviewing ? .on : .off
         menu.addItem(preview)
         menu.addItem(item("Settings…", #selector(openSettings), key: ","))
+        menu.addItem(item("Setup Guide…", #selector(openOnboarding)))
+        menu.addItem(item("About Brimtune", #selector(showAbout)))
         menu.addItem(.separator())
         menu.addItem(item("Quit Brimtune", #selector(quit), key: "q"))
     }
@@ -127,6 +133,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     @objc private func openSettings() { showSettings() }
     @objc private func quit() { NSApp.terminate(nil) }
     @objc private func openHistory() { showHistory() }
+    @objc private func openOnboarding() { onboarding.show() }
+
+    @objc private func showAbout() {
+        let credits = NSMutableAttributedString(
+            string: "Your Mac's notch, playing along.\n\nLyrics from LRCLIB · Covers from Apple's iTunes Search\nMade in Ukraine",
+            attributes: [.font: NSFont.systemFont(ofSize: 11), .foregroundColor: NSColor.secondaryLabelColor]
+        )
+        let paragraph = NSMutableParagraphStyle()
+        paragraph.alignment = .center
+        credits.addAttribute(.paragraphStyle, value: paragraph, range: NSRange(location: 0, length: credits.length))
+        if let range = credits.string.range(of: "LRCLIB") {
+            credits.addAttribute(.link, value: URL(string: "https://lrclib.net")!, range: NSRange(range, in: credits.string))
+        }
+        NSApp.activate(ignoringOtherApps: true)
+        NSApp.orderFrontStandardAboutPanel(options: [.credits: credits])
+    }
     @objc private func startStopwatch() { activities.startStopwatch() }
     @objc private func toggleStopwatch() { activities.toggleStopwatch() }
     @objc private func resetStopwatch() { activities.resetStopwatch() }

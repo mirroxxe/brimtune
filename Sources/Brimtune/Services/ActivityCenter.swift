@@ -73,6 +73,18 @@ final class ActivityCenter: ObservableObject {
         }
     }
 
+    /// Asked from the setup guide; starts watching the calendar once allowed.
+    func requestCalendarAccess() {
+        UserDefaults.standard.set(true, forKey: "calendarAsked")
+        store.requestFullAccessToEvents { [weak self] granted, _ in
+            DispatchQueue.main.async {
+                guard let self, granted else { return }
+                self.preferences.calendarEnabled = true
+                self.setCalendar(true)
+            }
+        }
+    }
+
     /// Anything worth showing in the compact island.
     var hasLiveActivity: Bool { timer != nil || stopwatch != nil || meeting != nil }
 
@@ -142,6 +154,9 @@ final class ActivityCenter: ObservableObject {
         calendarTimer?.invalidate()
         meeting = nil
         guard enabled else { return }
+        // The first ask belongs to the setup guide, not to app launch.
+        guard EKEventStore.authorizationStatus(for: .event) != .notDetermined
+              || UserDefaults.standard.bool(forKey: "onboardingDone") else { return }
         store.requestFullAccessToEvents { [weak self] granted, _ in
             guard granted else { return }
             DispatchQueue.main.async {
