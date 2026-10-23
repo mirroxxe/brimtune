@@ -8,19 +8,19 @@ If you don't agree, please don't use it.
 
 ## 1. The licence
 
-Brimtune is free. I give you a personal, worldwide, non-exclusive, non-transferable
-licence to download, install and use Brimtune on Macs you own or control, for any
-personal or work purpose.
+Brimtune is free and open source. Its source code is published at
+https://github.com/mirroxxe/brimtune under the GNU General Public License, version 3
+(GPL-3.0). You may use Brimtune on any Mac for any purpose, study and change its code,
+and share it, as it is or changed, as long as you do that under the GPL: keep the
+copyright and licence notices, and make the source code of your version available
+under the same licence.
 
-You may not:
+The GPL covers the code, not the Brimtune name and icon. If you share a changed version,
+give it a different name and icon so nobody mistakes it for the official app
+(GPL-3.0, section 7(e)). Please don't use Brimtune to break the law or another
+service's terms.
 
-- sell, rent or charge for Brimtune, or bundle it with something you sell;
-- distribute modified versions, or present Brimtune or parts of it as your own;
-- remove or change its copyright notices or name;
-- use Brimtune to break the law or another service's terms.
-
-You can share the official download link freely. Brimtune and its name, icon and
-design remain mine; this licence doesn't transfer any ownership.
+Where these terms and the GPL differ about what you may do with the code, the GPL wins.
 
 ## 2. Other services you use with Brimtune
 
@@ -74,11 +74,10 @@ liability for any claim is limited to USD 0, or the minimum amount the applicabl
 allows if that is higher. Nothing in these terms limits liability that can't be limited
 by law, or your rights as a consumer where you live.
 
-## 9. Ending the licence
+## 9. Stopping
 
-You can stop using Brimtune at any time by deleting it. If you break these terms, your
-licence ends automatically and you must delete Brimtune. Sections 3, 7, 8 and 10 still
-apply afterwards.
+You can stop using Brimtune at any time by deleting it. What you may do with its code is
+set by the GPL. Sections 3, 7, 8 and 10 still apply after you stop.
 
 ## 10. Governing law
 

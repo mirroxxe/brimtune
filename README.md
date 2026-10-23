@@ -2,7 +2,10 @@
 
 A Dynamic Island–style now-playing island for the Mac's notch: music from Apple Music,
 Spotify and YouTube Music (Safari/Chrome), synced karaoke lyrics, a player on the lock
-screen, playlists, timers, calendar countdowns and AirPods alerts.
+screen, playlists, timers, calendar countdowns and AirPods alerts. On displays without a
+notch it floats as a small pill.
+
+Free and open source. Download it at **https://brimtune.pages.dev**.
 
 ## Build
 
@@ -52,3 +55,21 @@ the latest release from `dist.noindex/`) and publishes it with Wrangler.
 npx wrangler login      # once
 ./deploy.sh             # publish
 ```
+
+## Contributing
+
+Issues and pull requests are welcome. Brimtune reads browser tabs with AppleScript and a
+little JavaScript (`Sources/Brimtune/NowPlaying/BrowserSource.swift`); YouTube Music and
+Spotify change their pages from time to time, so fixes there are especially useful.
+
+## Licence
+
+Copyright © 2026 Volodymyr Chuchman. Made in Ukraine.
+
+Brimtune is free software: you can redistribute it and/or modify it under the terms of
+the GNU General Public License, version 3, as published by the Free Software Foundation
+(see `LICENSE`). It comes with no warranty.
+
+The licence covers the code, not the Brimtune name and icon: if you publish a changed
+version, give it a different name and icon (GPL-3.0, section 7(e)). Third-party code and
+its licences are listed in `Legal/third-party-notices.md`.
