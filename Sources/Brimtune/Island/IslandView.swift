@@ -438,6 +438,7 @@ private struct ExpandedContent: View {
     var playSearch: (SearchResult) -> Void
     var dismissSearch: () -> Void
     var requestKeyboard: () -> Void
+    @ObservedObject private var volume = SystemVolume.shared
 
     var body: some View {
         VStack(spacing: 0) {
@@ -568,6 +569,12 @@ private struct ExpandedContent: View {
                 Spacer(minLength: 0)
                 IconButton(symbol: "arrow.up.left.and.arrow.down.right", size: 11, active: false, action: openStage)
                     .frame(width: 30)
+            }
+
+            if volume.isAdjustable {
+                VolumeSlider()
+                    .padding(.horizontal, 6)
+                    .transition(.opacity.combined(with: .scale(scale: 0.96, anchor: .top)))
             }
         }
         .padding(.top, 6)

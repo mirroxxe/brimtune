@@ -639,3 +639,87 @@ struct NotchShape: Shape {
 final class FirstMouseHostingView<Content: View>: NSHostingView<Content> {
     override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
 }
+
+// MARK: - Volume
+
+/// A speaker and a slider for the Mac's output volume. The bar thickens and shows a thumb
+/// when the pointer is on it, the speaker icon steps through its waves as the level changes,
+/// and the percentage rises out of the bar while it is dragged.
+struct VolumeSlider: View {
+    @ObservedObject private var volume = SystemVolume.shared
+    @State private var dragLevel: Float?
+    @State private var hovering = false
+
+    private var shown: Float { volume.isMuted ? 0 : (dragLevel ?? volume.level) }
+
+    private var symbol: String {
+        switch shown {
+        case 0: "speaker.slash.fill"
+        case ..<0.34: "speaker.wave.1.fill"
+        case ..<0.67: "speaker.wave.2.fill"
+        default: "speaker.wave.3.fill"
+        }
+    }
+
+    var body: some View {
+        let active = hovering || dragLevel != nil
+        HStack(spacing: 10) {
+            Button { volume.toggleMute() } label: {
+                Image(systemName: symbol)
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(.white.opacity(active ? 0.85 : 0.5))
+                    .contentTransition(.symbolEffect(.replace))
+                    .frame(width: 20, height: 22)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .help(volume.isMuted ? "Unmute" : "Mute")
+
+            GeometryReader { geo in
+                let width = geo.size.width
+                let thumb: CGFloat = 12
+                let x = CGFloat(shown) * (width - thumb) + thumb / 2
+                ZStack(alignment: .leading) {
+                    Capsule().fill(.white.opacity(0.18))
+                    Capsule().fill(.white.opacity(0.9)).frame(width: max(0, x))
+                    Circle().fill(.white)
+                        .frame(width: thumb, height: thumb)
+                        .shadow(color: .black.opacity(0.35), radius: 2, y: 1)
+                        .scaleEffect(dragLevel != nil ? 1.2 : active ? 1 : 0.01)
+                        .offset(x: x - thumb / 2)
+                        .overlay(alignment: .top) {
+                            Text("\(Int((shown * 100).rounded()))")
+                                .font(.system(size: 10, weight: .semibold).monospacedDigit())
+                                .foregroundStyle(.white.opacity(0.8))
+                                .fixedSize()
+                                .offset(x: x - thumb / 2 - 0, y: -17)
+                                .opacity(dragLevel != nil ? 1 : 0)
+                        }
+                }
+                .frame(height: active ? 7 : 4)
+                .frame(maxHeight: .infinity)
+                .contentShape(Rectangle())
+                .onHover { hovering = $0 }
+                .gesture(
+                    DragGesture(minimumDistance: 0)
+                        .onChanged { value in
+                            let f = Float(min(1, max(0, (value.location.x - thumb / 2) / max(1, width - thumb))))
+                            dragLevel = f
+                            volume.set(f)
+                        }
+                        .onEnded { _ in dragLevel = nil }
+                )
+                .animation(.spring(response: 0.3, dampingFraction: 0.75), value: active)
+                .animation(.spring(response: 0.3, dampingFraction: 0.75), value: dragLevel != nil)
+                .animation(dragLevel == nil ? .smooth(duration: 0.25) : nil, value: shown)
+            }
+            .frame(height: 22)
+
+            Image(systemName: "speaker.wave.3.fill")
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundStyle(.white.opacity(0.25))
+                .frame(width: 20)
+        }
+        .frame(height: 22)
+    }
+}
