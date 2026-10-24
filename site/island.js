@@ -188,6 +188,7 @@
       while (t > lineLength(current)) { t -= lineLength(current); current += 1; }
       lines.forEach((line, i) => {
         line.classList.toggle("future", i > current);
+        line.classList.toggle("past", i < current);
         words[i].forEach((w, k) => {
           const p = i < current ? 1 : i > current ? 0 : Math.min(Math.max((t - k * wordTime) / wordTime, 0), 1);
           w.style.setProperty("--p", p.toFixed(3));

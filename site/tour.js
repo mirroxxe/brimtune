@@ -229,13 +229,14 @@
 
     // 6. Lyrics: the full-screen player; clicking a line syncs to it.
     lyrics(t) {
-      begin(t, () => { state("compact"); scene("stage"); });
+      // The app hides the island while its full-screen player is up.
+      begin(t, () => { state("hidden"); scene("stage"); });
       t.set(cursor, { x: stage.clientWidth * 0.82, y: stage.clientHeight * 0.85, opacity: 0 }, 0);
       show(0.8);
-      glide(1.0, () => stage.querySelector(".stage-lyrics p:nth-child(4)"), { dur: 1.4, fx: 0.25 });
+      glide(1.0, () => stage.querySelector(".stage-lyrics p:nth-child(5)"), { dur: 1.4, fx: 0.25 });
       t.call(() => say("Running early? Click a line to sync"), null, 2.4);
       press(3.2);
-      t.call(() => { window.brimtuneSeekLine?.(3); hush(); }, null, 3.25);
+      t.call(() => { window.brimtuneSeekLine?.(4); hush(); }, null, 3.25);
       away(4.6);
       t.to({}, { duration: 6.6 }, 0);
     },
