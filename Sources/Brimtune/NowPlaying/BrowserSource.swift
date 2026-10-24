@@ -188,6 +188,10 @@ final class BrowserSource: NowPlayingSource {
       if (m) { o.t = m.currentTime; o.d = m.duration; o.paused = m.paused; }
       var q = function(id){ var e = document.querySelector('[data-testid="' + id + '"]'); return e ? e.textContent : null; };
       o.pos = q('playback-position'); o.dur = q('playback-duration');
+      var bar = document.querySelector('ytmusic-player-bar');
+      if (bar) { o.shuf = bar.hasAttribute('shuffle-on'); o.rep = (bar.getAttribute('repeat-mode') || '').toUpperCase(); }
+      var sp = function(id){ var e = document.querySelector('[data-testid="' + id + '"]'); return e ? e.getAttribute('aria-checked') : null; };
+      if (sp('control-button-shuffle') !== null) { o.shuf = sp('control-button-shuffle') === 'true'; o.rep = sp('control-button-repeat') === 'mixed' ? 'ONE' : sp('control-button-repeat') === 'true' ? 'ALL' : 'NONE'; }
       var items = Array.prototype.slice.call(document.querySelectorAll('ytmusic-player-queue-item'));
       var cur = -1;
       items.forEach(function(e, i){ if (e.hasAttribute('selected')) cur = i; });
@@ -305,7 +309,8 @@ final class BrowserSource: NowPlayingSource {
         let snapshot = TrackSnapshot(
             title: title, artist: artist, album: o["album"] as? String ?? "",
             duration: duration ?? 0, elapsed: position ?? 0, sampledAt: Date(),
-            isPlaying: playing, shuffle: nil, repeatMode: nil, liked: nil,
+            isPlaying: playing, shuffle: o["shuf"] as? Bool,
+            repeatMode: (o["rep"] as? String).map { $0 == "ONE" ? .one : $0 == "ALL" ? .all : .off }, liked: nil,
             bundleID: browser.bundleID,
             queue: (o["queue"] as? [[String: Any]] ?? []).compactMap { q in
                 guard let i = q["i"] as? Int, let t = q["t"] as? String, !t.isEmpty else { return nil }

@@ -577,13 +577,23 @@ private struct ExpandedContent: View {
             }
 
             HStack(spacing: 0) {
-                leadingAccessory(track).frame(width: 30)
+                leadingAccessory(track).frame(width: 60, alignment: .leading)
                 Spacer(minLength: 0)
                 TransportControls(center: center, size: 19, showModes: false)
                     .frame(width: 190)
                 Spacer(minLength: 0)
-                IconButton(symbol: "arrow.up.left.and.arrow.down.right", size: 11, active: false, action: openStage)
-                    .frame(width: 30)
+                HStack(spacing: 0) {
+                    if track.repeatMode != nil {
+                        IconButton(symbol: track.repeatMode == .one ? "repeat.1" : "repeat", size: 11,
+                                   active: track.repeatMode != .off) { center.perform(.cycleRepeat) }
+                            .frame(width: 30)
+                    } else {
+                        Color.clear.frame(width: 30, height: 24)
+                    }
+                    IconButton(symbol: "arrow.up.left.and.arrow.down.right", size: 11, active: false, action: openStage)
+                        .frame(width: 30)
+                }
+                .frame(width: 60, alignment: .trailing)
             }
 
             if center.musicVolume != nil {
