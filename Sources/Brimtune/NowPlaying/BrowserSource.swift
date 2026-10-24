@@ -585,19 +585,68 @@ final class BrowserSource: NowPlayingSource {
     }
     """
 
-    /// The songs on a playlist page.
-    private static let songVisitJS = """
-    function(o, out){
-      var m = o.musicResponsiveListItemRenderer;
-      if (!m) return false;
-      var col = function(i){ var c = m.flexColumns && m.flexColumns[i]; var rr = c && c.musicResponsiveListItemFlexColumnRenderer.text.runs; return rr ? rr.map(function(x){ return x.text }).join('') : '' };
-      var fc = m.fixedColumns && m.fixedColumns[0];
-      var th = m.thumbnail && m.thumbnail.musicThumbnailRenderer && m.thumbnail.musicThumbnailRenderer.thumbnail.thumbnails;
-      var v = (m.playlistItemData || {}).videoId;
-      if (v) out.push({ v: v, t: col(0), a: col(1), d: fc ? ((fc.musicResponsiveListItemFixedColumnRenderer.text.runs || [{}])[0].text || '') : '', img: th ? th[th.length - 1].url : '' });
-      return true;
+    /// A playlist's songs through the page's own signed-in session, batch after batch:
+    /// the page HTML holds the first ~100, YouTube's browse API hands out the rest.
+    private static func chromeSongsJS(key: String, attribute: String) -> String {
+        #"""
+        (function(){
+          var root = document.documentElement, out = [];
+          root.removeAttribute('\#(attribute)');
+          var finish = function(){ root.setAttribute('\#(attribute)', JSON.stringify(out)) };
+          var runs = function(t){ return t && t.runs ? t.runs.map(function(r){ return r.text }).join('') : '' };
+          var collect = function(o, first, shelf, box){
+            if (!o || typeof o !== 'object') return;
+            var m = o.musicResponsiveListItemRenderer;
+            if (m) {
+              var col = function(i){ var c = m.flexColumns && m.flexColumns[i]; return c ? runs(c.musicResponsiveListItemFlexColumnRenderer.text) : '' };
+              var fc = m.fixedColumns && m.fixedColumns[0];
+              var th = m.thumbnail && m.thumbnail.musicThumbnailRenderer && m.thumbnail.musicThumbnailRenderer.thumbnail.thumbnails;
+              var v = (m.playlistItemData || {}).videoId;
+              if (v) out.push({ v: v, t: col(0), a: col(1), d: fc ? ((fc.musicResponsiveListItemFixedColumnRenderer.text.runs || [{}])[0].text || '') : '', img: th ? th[th.length - 1].url : '' });
+              return;
+            }
+            if (o.musicPlaylistShelfRenderer) shelf = true;
+            if (shelf || !first) {
+              if (o.continuationCommand && o.continuationCommand.token) box.token = o.continuationCommand.token;
+              if (o.nextContinuationData) box.token = o.nextContinuationData.continuation;
+            }
+            for (var k in o) collect(o[k], first, shelf, box);
+          };
+          var sha1 = function(text){
+            return crypto.subtle.digest('SHA-1', new TextEncoder().encode(text)).then(function(buf){
+              return Array.prototype.map.call(new Uint8Array(buf), function(b){ return ('0' + b.toString(16)).slice(-2) }).join('');
+            });
+          };
+          var cookie = function(name){ var m = document.cookie.match(new RegExp('(?:^|; )' + name + '=([^;]*)')); return m ? m[1] : '' };
+          fetch('/playlist?list=\#(key)', { credentials: 'include' }).then(function(r){ return r.text() }).then(function(html){
+            var re = /data:\s*'((?:[^'\\]|\\.)*)'/g, m, box = { token: null };
+            while ((m = re.exec(html))) {
+              try { collect(JSON.parse(JSON.parse('"' + m[1].replace(/\\x([0-9a-fA-F]{2})/g, '\\u00$1').replace(/\\'/g, "'") + '"')), true, false, box) } catch (e) {}
+            }
+            var apiKey = (html.match(/INNERTUBE_API_KEY[^A-Za-z0-9]{1,12}([A-Za-z0-9_-]{20,})/) || [])[1];
+            var version = (html.match(/INNERTUBE_CONTEXT_CLIENT_VERSION[^0-9]{1,12}([0-9.]+)/) || [])[1];
+            if (!box.token || !apiKey || !version) return finish();
+            var next = function(token, n){
+              var sid = cookie('SAPISID') || cookie('__Secure-3PAPISID'), stamp = Math.floor(Date.now() / 1000);
+              sha1(stamp + ' ' + sid + ' ' + location.origin).then(function(hash){
+                var headers = { 'Content-Type': 'application/json', 'X-Goog-AuthUser': '0', 'X-Origin': location.origin };
+                if (sid) headers.Authorization = 'SAPISIDHASH ' + stamp + '_' + hash;
+                return fetch('/youtubei/v1/browse?prettyPrint=false&key=' + apiKey, {
+                  method: 'POST', credentials: 'include', headers: headers,
+                  body: JSON.stringify({ context: { client: { clientName: 'WEB_REMIX', clientVersion: version, hl: 'en' } }, continuation: token })
+                });
+              }).then(function(r){ return r.json() }).then(function(json){
+                var more = { token: null };
+                collect(json, false, false, more);
+                if (more.token && more.token !== token && n < 80) next(more.token, n + 1); else finish();
+              }).catch(finish);
+            };
+            next(box.token, 0);
+          }).catch(finish);
+          return 'started';
+        })()
+        """#
     }
-    """
 
     /// Runs `js` in `tab` on the script queue and hands back what it returned ("" on failure).
     private func evaluate(_ js: String, in tab: Tab, after delay: TimeInterval = 0, completion: @escaping (String) -> Void) {
@@ -635,19 +684,22 @@ final class BrowserSource: NowPlayingSource {
         // Chrome: the playlist's own page, which needs nothing from the page's objects.
         if browser == .chrome {
             let attribute = "data-brimtune-songs-\(key)"
-            let start = Self.embeddedDataJS(path: "/playlist?list=\(key)", attribute: attribute, visit: Self.songVisitJS)
+            let start = Self.chromeSongsJS(key: key, attribute: attribute)
             return evaluate(start, in: tab) { [weak self] _ in
-                self?.collect(attribute, in: tab, attempts: 25) { completion(Self.songs(from: $0)) }
+                self?.collect(attribute, in: tab, attempts: 150) { completion(Self.songs(from: $0)) }
             }
         }
         let start = """
         (function(){
           var a = document.querySelector('ytmusic-app'), nm = a && (a.networkManager || a.networkManager_);
           window.__brimtuneSongs = window.__brimtuneSongs || {};
+          window.__brimtuneSongs['\(key)'] = '';
           if (!nm || !nm.fetch) { window.__brimtuneSongs['\(key)'] = '[]'; return 'none' }
-          nm.fetch('/browse', { browseId: 'VL\(key)' }).then(function(r){
-            var out = [];
-            (function walk(o){
+          var out = [];
+          var finish = function(){ window.__brimtuneSongs['\(key)'] = JSON.stringify(out) };
+          var collect = function(root, first){
+            var token = null;
+            (function walk(o, shelf){
               if (!o || typeof o !== 'object') return;
               var m = o.musicResponsiveListItemRenderer;
               if (m) {
@@ -658,15 +710,30 @@ final class BrowserSource: NowPlayingSource {
                 if (v) out.push({ v: v, t: col(0), a: col(1), d: fc ? ((fc.musicResponsiveListItemFixedColumnRenderer.text.runs || [{}])[0].text || '') : '', img: th ? th[th.length - 1].url : '' });
                 return;
               }
-              for (var k in o) walk(o[k]);
-            })(r);
-            window.__brimtuneSongs['\(key)'] = JSON.stringify(out);
-          }).catch(function(){ window.__brimtuneSongs['\(key)'] = '[]' });
+              if (o.musicPlaylistShelfRenderer) shelf = true;
+              if (shelf || !first) {
+                if (o.continuationCommand && o.continuationCommand.token) token = o.continuationCommand.token;
+                if (o.nextContinuationData) token = o.nextContinuationData.continuation;
+              }
+              for (var k in o) walk(o[k], shelf);
+            })(root, false);
+            return token;
+          };
+          var more = function(token, n){
+            nm.fetch('/browse', { continuation: token }).then(function(r){
+              var next = collect(r, false);
+              if (next && next !== token && n < 80) more(next, n + 1); else finish();
+            }).catch(finish);
+          };
+          nm.fetch('/browse', { browseId: 'VL\(key)' }).then(function(r){
+            var token = collect(r, true);
+            if (token) more(token, 0); else finish();
+          }).catch(function(){ window.__brimtuneSongs['\(key)'] = JSON.stringify(out) });
           return 'started';
         })()
         """
         run(inPage(start), in: tab)
-        poll(key: key, tab: tab, attempts: 20, completion: completion)
+        poll(key: key, tab: tab, attempts: 150, completion: completion)
     }
 
     private func poll(key: String, tab: Tab, attempts: Int, completion: @escaping ([PlaylistSong]) -> Void) {

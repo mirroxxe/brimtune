@@ -107,7 +107,8 @@ struct ArtworkView: View {
     var palette: ArtworkPalette = .fallback
 
     var body: some View {
-        ZStack {
+        // The frame decides the size; a wide cover is cropped inside it, never spilling over its neighbours.
+        Color.clear.overlay { ZStack {
             if let image {
                 Image(nsImage: image)
                     .resizable()
@@ -125,7 +126,7 @@ struct ArtworkView: View {
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
             }
-        }
+        } }
         .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
         .overlay {
             RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)

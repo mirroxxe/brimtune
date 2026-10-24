@@ -735,10 +735,6 @@ private struct UpNextRow: View {
                 .buttonStyle(.plain)
                 .help(collapsed ? "Show up next" : "Hide up next")
 
-                if !collapsed && pages > 1 {
-                    pager("chevron.left", enabled: current > 0) { page = current - 1 }
-                    pager("chevron.right", enabled: current < pages - 1) { page = current + 1 }
-                }
                 Button {
                     withAnimation(.spring(response: 0.45, dampingFraction: 0.88)) { collapsed.toggle() }
                 } label: {
@@ -755,8 +751,15 @@ private struct UpNextRow: View {
             .onHover { over in withAnimation(.smooth(duration: 0.15)) { hoveringHeader = over } }
 
             if !collapsed {
-                ForEach(shown) { item in
-                    UpNextItem(item: item) { play(item.id) }
+                // Arrows sit beside the songs, left and right, to page through the queue.
+                HStack(spacing: 2) {
+                    if pages > 1 { pager("chevron.left", enabled: current > 0) { page = current - 1 } }
+                    VStack(spacing: 2) {
+                        ForEach(shown) { item in
+                            UpNextItem(item: item) { play(item.id) }
+                        }
+                    }
+                    if pages > 1 { pager("chevron.right", enabled: current < pages - 1) { page = current + 1 } }
                 }
                 .transition(.opacity.combined(with: .move(edge: .top)))
             }
@@ -771,7 +774,8 @@ private struct UpNextRow: View {
             Image(systemName: symbol)
                 .font(.system(size: 10, weight: .bold))
                 .foregroundStyle(.white.opacity(enabled ? 0.7 : 0.18))
-                .frame(width: 22, height: 22)
+                .frame(width: 20)
+                .frame(maxHeight: .infinity)
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)

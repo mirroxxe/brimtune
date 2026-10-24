@@ -273,6 +273,7 @@ final class NowPlayingCenter: ObservableObject {
         browser.fetchSongs(of: playlist) { [weak self] songs in
             guard let self else { return }
             self.loadingPlaylists.remove(playlist.id)
+            brimtuneLog("playlist %@: %d songs", playlist.title, songs.count)
             withAnimation(.smooth) { self.playlistSongs[playlist.id] = songs }
             // A private playlist without a cover borrows its first song's.
             if let i = self.playlists.firstIndex(where: { $0.id == playlist.id }), self.playlists[i].artwork == nil,
