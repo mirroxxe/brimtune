@@ -98,8 +98,7 @@ updates, free) → "The idea" + scrubbed marquee → install with a Privacy & Se
 closing with a giant wordmark. Checked at 1440×900 and 375×812.
 
 Later changes: the hero is centred over blurred colour fields (`.aurora`) with glass widgets;
-the tour has ten steps on a mock Mac (three scenes: browser, full-screen player, full-screen
-video) with a pointer that clicks what each step is about; the demo island's views mirror the
+the tour has nine steps on a mock Mac (two scenes: browser and the full-screen player) with a pointer that clicks what each step is about; the demo island's views mirror the
 app's open island (volume, search under the player, Up Next with arrows, playlist song list) and
 its height is measured into `--h` by `island.js`. `site/tour.js` plays a short film per tour step (pointer, hover, drag, typing, menus, alerts, full screen) as a looping GSAP timeline; `motion.js` only picks the step. When the app's island UI changes, update
 `#island` in `site/index.html` (the tour clones it). What's new = an update-window mock plus a

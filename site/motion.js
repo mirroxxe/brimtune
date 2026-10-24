@@ -222,7 +222,7 @@
     gsap.set("[data-reveal]", { opacity: 0 });
   }
 
-  // ---------- The tour: one island, ten things it does, on a Mac that reacts ----------
+  // ---------- The tour: one island, nine things it does, on a Mac that reacts ----------
 
   const tour = document.querySelector(".tour");
   const steps = [...tour.querySelectorAll("[data-step]")];

@@ -13,7 +13,6 @@
   const cursor = stage.querySelector(".cursor");
   const tip = cursor.querySelector(".cursor-tip");
   const menuIcon = stage.querySelector(".mb-icon");
-  const windowEl = stage.querySelector(".tour-window");
   const q = (selector) => island.querySelector(selector);
   const qa = (selector) => [...island.querySelectorAll(selector)];
 
@@ -84,8 +83,6 @@
     window.brimtuneRestoreTrack?.();
     qa(".cover-lg").forEach((el) => { el.style.removeProperty("--c1"); el.style.removeProperty("--c2"); el.style.removeProperty("--c3"); });
     qa(".songs li").forEach((li, i) => li.classList.toggle("now", i === 0));
-    gsap.set(windowEl, { clearProps: "all" });
-    stage.querySelector(".v-esc")?.classList.remove("hit");
     scene("browser");
     hush();
   }
@@ -292,24 +289,6 @@
       t.to(pct, { n: 82, duration: 1.5, delay: 0.35, ease: "power2.out", onUpdate: () => setText(".view-airpods .pct", String(Math.round(pct.n))) }, 1.0);
       t.call(() => state("compact"), null, 5.2);
       t.to({}, { duration: 6.8 }, 0);
-    },
-
-    // 10. Full screen: the window goes full screen and the island steps aside; Esc brings it back.
-    fullscreen(t) {
-      begin(t, () => { state("compact"); scene("browser"); });
-      t.set(cursor, { x: stage.clientWidth * 0.5, y: stage.clientHeight * 0.9, opacity: 0 }, 0);
-      show(0.4);
-      const dot = () => stage.querySelector(".tw-bar i:nth-child(3)");
-      glide(0.6, dot, { dur: 1.2 });
-      t.call(() => { hot(dot()); say("Go full screen"); }, null, 1.8);
-      press(2.2);
-      t.to(windowEl, { left: "0%", right: "0%", bottom: "0%", height: "104%", borderRadius: 0, duration: 0.8, ease: "power3.inOut" }, 2.3);
-      t.call(() => { hot(dot(), false); hush(); state("hidden"); scene("video"); }, null, 2.75);
-      away(2.8);
-      t.call(() => { stage.querySelector(".v-esc")?.classList.add("hit"); }, null, 5.6);
-      t.call(() => { stage.querySelector(".v-esc")?.classList.remove("hit"); scene("browser"); state("compact"); }, null, 6.3);
-      t.to(windowEl, { clearProps: "all", duration: 0 }, 6.4);
-      t.to({}, { duration: 8.4 }, 0);
     },
   };
 
