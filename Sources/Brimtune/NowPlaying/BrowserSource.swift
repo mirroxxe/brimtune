@@ -834,19 +834,37 @@ final class BrowserSource: NowPlayingSource {
         }
     }
 
-    /// The page's own player volume (the media element's), not the Mac's.
+    /// The web player's own volume control, not the Mac's. The players keep their own copy of the
+    /// level and put it back on the media element, so the control itself has to be the one that moves.
     func volume(completion: @escaping (Double?) -> Void) {
         guard let tab = activeTab, tab.pageAccess else { return completion(nil) }
-        evaluate("(function(){var m=document.querySelector('video,audio');return m?String(m.volume):''})()", in: tab) { completion(Double($0)) }
+        let read: String
+        switch tab.site {
+        case .youtubeMusic:
+            read = "var s=document.querySelector('#volume-slider');return s&&s.value!=null?String(s.value/100):''"
+        case .spotify:
+            read = "var i=document.querySelector('[data-testid=\"volume-bar\"] input[type=range]');return i?String(i.value/(i.max||1)):''"
+        }
+        evaluate("(function(){\(read)})()", in: tab) { completion(Double($0)) }
     }
 
     func setVolume(_ value: Double) {
         guard let tab = activeTab, tab.pageAccess else { return }
         let v = min(1, max(0, value))
-        run("var m=document.querySelectorAll('video,audio');for(var i=0;i<m.length;i++)m[i].volume=\(v)", in: tab)
-        if tab.site == .youtubeMusic {
-            // The player keeps its own copy of the level and would put it back on the next song.
-            run(inPage("(function(){var b=document.querySelector('ytmusic-player-bar'),p=b&&(b.playerApi_||b.playerApi);if(p&&p.setVolume)p.setVolume(\(Int((v * 100).rounded())));return 'ok'})()"), in: tab)
+        switch tab.site {
+        case .youtubeMusic:
+            run("""
+            var s=document.querySelector('#volume-slider');
+            if(s){s.value=\(Int((v * 100).rounded()));
+            s.dispatchEvent(new CustomEvent('immediate-value-change',{bubbles:true,composed:true}));
+            s.dispatchEvent(new CustomEvent('change',{bubbles:true,composed:true}));}
+            """, in: tab)
+        case .spotify:
+            run("""
+            var i=document.querySelector('[data-testid="volume-bar"] input[type=range]');
+            if(i){var set=Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set;
+            set.call(i,\(v)*(i.max||1));i.dispatchEvent(new Event('input',{bubbles:true}));i.dispatchEvent(new Event('change',{bubbles:true}));}
+            """, in: tab)
         }
     }
 
