@@ -632,18 +632,31 @@ p { margin: 0 0 1rem; }
   .stage-lyrics p { font-size: 4.2cqw; }
 }
 
-/* The full-screen video scene. */
-.video-frame { position: absolute; inset: 0; overflow: hidden; background: linear-gradient(180deg, #1B2B5C 0%, #6C4C9A 48%, #F29A6B 78%, #FFC98A 100%); }
-.video-sun { position: absolute; left: 62%; top: 52%; width: 14%; aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle, #FFF3C9, #FFC27A 60%, transparent 72%); filter: blur(2px); }
-.video-hills { position: absolute; left: -5%; right: -5%; bottom: 0; height: 30%; background: #1A1224; clip-path: polygon(0 40%, 14% 22%, 30% 38%, 48% 12%, 66% 34%, 84% 18%, 100% 36%, 100% 100%, 0 100%); }
-.video-ui { position: absolute; left: 5%; right: 5%; bottom: 5%; display: flex; align-items: center; gap: 14px; color: #fff; font: 500 12px/1 var(--text); }
-.v-play { width: 0; height: 0; border-style: solid; border-width: 7px 0 7px 12px; border-color: transparent transparent transparent #fff; }
-.v-bar { flex: 1; height: 4px; border-radius: 4px; background: rgba(255, 255, 255, .3); overflow: hidden; }
-.v-bar i { display: block; width: 38%; height: 100%; background: #FF4E45; animation: scrub 12s linear infinite; }
-@keyframes scrub { from { width: 38%; } to { width: 100%; } }
-.v-esc { transition: opacity .4s, background .3s, transform .3s var(--spring); }
-.v-esc.hit { background: #fff; color: #000; transform: translateX(-50%) scale(1.1); }
-.v-esc { position: absolute; top: 5%; left: 50%; transform: translateX(-50%); padding: .55rem 1rem; border-radius: 999px; background: rgba(0, 0, 0, .5); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); color: #fff; font: 500 12px/1 var(--text); }
+/* The full-screen video scene: a dusk sky made of the same blurred light as the hero, with glass controls. */
+.scene-video { container-type: size; }
+.video-frame { --a1: #FF7A59; --a2: #6B4DE6; --a3: #FFC27A; position: absolute; inset: 0; overflow: hidden; background: #10081F; color: #fff; }
+.video-frame .aurora-field span:nth-child(3) { left: 4vmax; bottom: -14vmax; opacity: 1; }
+.video-sun { position: absolute; left: 58%; bottom: 20cqh; width: 26cqw; aspect-ratio: 1; margin-left: -13cqw; border-radius: 50%; background: radial-gradient(circle, #FFF6D6 0, #FFD08A 28%, rgba(255, 170, 110, .55) 48%, transparent 70%); filter: blur(3px); animation: breathe 9s ease-in-out infinite; }
+.video-hills { position: absolute; left: -4%; right: -4%; bottom: 0; }
+.video-hills.far { height: 30cqh; background: linear-gradient(#2B1D45, #1B1230); filter: blur(1.5px); opacity: .92; clip-path: polygon(0 52%, 12% 30%, 26% 48%, 42% 22%, 58% 44%, 74% 26%, 88% 46%, 100% 34%, 100% 100%, 0 100%); }
+.video-hills.near { height: 22cqh; background: #0C0716; clip-path: polygon(0 46%, 16% 62%, 32% 34%, 50% 58%, 68% 30%, 84% 56%, 100% 40%, 100% 100%, 0 100%); }
+.video-top { position: absolute; left: 4cqw; top: 4cqh; display: flex; align-items: center; gap: 1.2cqw; }
+.v-avatar { width: 4.4cqw; min-width: 28px; aspect-ratio: 1; border-radius: 50%; background: linear-gradient(140deg, #FFC27A, #FF5D8F); box-shadow: 0 0 0 2px rgba(255, 255, 255, .3); }
+.v-meta { display: flex; flex-direction: column; line-height: 1.25; text-shadow: 0 1px 8px rgba(0, 0, 0, .5); }
+.v-meta strong { font: 700 max(1.8cqw, 13px)/1.25 var(--text); }
+.v-meta small { font: 400 max(1.35cqw, 10px)/1.3 var(--text); opacity: .75; }
+.v-esc { position: absolute; top: 4cqh; right: 4cqw; padding: .6em 1.1em; border-radius: 999px; background: rgba(20, 14, 34, .5); border: 1px solid rgba(255, 255, 255, .2); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); color: #fff; font: 500 max(1.35cqw, 10px)/1 var(--text); transition: background .3s, color .3s, transform .3s var(--spring); }
+.v-esc.hit { background: #fff; color: #000; transform: scale(1.1); }
+.v-caption { position: absolute; left: 50%; bottom: 17cqh; transform: translateX(-50%); width: max-content; max-width: 84cqw; margin: 0; padding: .35em .8em; border-radius: .5em; background: rgba(0, 0, 0, .55); font: 500 max(1.9cqw, 12px)/1.3 var(--text); text-align: center; }
+.video-ui { position: absolute; left: 3cqw; right: 3cqw; bottom: 3.5cqh; display: flex; align-items: center; gap: 1.8cqw; padding: 1.1cqw 2cqw; border-radius: 2cqw; }
+.video-ui svg { width: max(2.3cqw, 16px); flex: none; fill: #fff; }
+.video-ui svg.line { fill: none; stroke: #fff; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+.v-time { font: 500 max(1.35cqw, 10px)/1 var(--text); font-variant-numeric: tabular-nums; white-space: nowrap; opacity: .9; }
+.v-bar { position: relative; flex: 1; height: 5px; border-radius: 5px; background: rgba(255, 255, 255, .28); }
+.v-bar i { position: absolute; inset: 0 auto 0 0; width: 35%; border-radius: inherit; background: #FF5D6C; animation: scrub 14s linear infinite; }
+.v-bar b { position: absolute; top: 50%; left: 35%; width: 13px; height: 13px; margin: -6.5px 0 0 -6.5px; border-radius: 50%; background: #fff; box-shadow: 0 1px 4px rgba(0, 0, 0, .5); animation: thumb 14s linear infinite; }
+@keyframes scrub { from { width: 35%; } to { width: 100%; } }
+@keyframes thumb { from { left: 35%; } to { left: 100%; } }
 
 /* A pointer that goes where the step is happening. */
 .cursor { position: absolute; z-index: 7; left: 0; top: 0; width: 22px; opacity: 0; pointer-events: none; filter: drop-shadow(0 4px 6px rgba(0, 0, 0, .45)); transition: opacity .4s; }

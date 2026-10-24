@@ -327,11 +327,23 @@
             </div>
           </div>
 
-          <!-- Scene three: a video, full screen. -->
+          <!-- Scene three: a video, full screen. The island is nowhere in sight. -->
           <div class="scene scene-video"><div class="video-frame">
-            <span class="video-sun"></span><span class="video-hills"></span>
-            <div class="video-ui"><span class="v-play"></span><span class="v-bar"><i></i></span><span class="v-time">12:04</span></div>
+            <div class="aurora" aria-hidden="true"><div class="aurora-field"><span></span><span></span><span></span><span></span><span class="ring"></span></div></div>
+            <span class="video-sun"></span><span class="video-hills far"></span><span class="video-hills near"></span>
+            <div class="video-top"><span class="v-avatar"></span><span class="v-meta"><strong>Harbour at dusk</strong><small>Teo Brann · 1.2M views</small></span></div>
             <span class="v-esc">Press Esc to leave full screen</span>
+            <p class="v-caption">…and the harbour lights come on, one by one.</p>
+            <div class="video-ui glass">
+              <svg viewBox="0 0 24 24"><path d="M8 5l11 7-11 7z"/></svg>
+              <svg viewBox="0 0 24 24"><path d="M6 6l9 6-9 6zM17 6h2v12h-2z"/></svg>
+              <svg class="line" viewBox="0 0 24 24"><path d="M4 9.5v5h3.6L13 19V5L7.6 9.5zM16 9a4 4 0 0 1 0 6"/></svg>
+              <span class="v-time">4:12 / 12:04</span>
+              <span class="v-bar"><i></i><b></b></span>
+              <svg class="line" viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="3"/><path d="M8 11h2M14 11h2M8 14h8"/></svg>
+              <svg class="line" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 3v2.5M12 18.5V21M3 12h2.5M18.5 12H21M5.6 5.6l1.8 1.8M16.6 16.6l1.8 1.8M5.6 18.4l1.8-1.8M16.6 7.4l1.8-1.8"/></svg>
+              <svg class="line" viewBox="0 0 24 24"><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/></svg>
+            </div>
           </div></div>
 
           <div class="tour-island-wrap"><div class="island tour-island" data-state="compact" data-playing="true"></div></div>
