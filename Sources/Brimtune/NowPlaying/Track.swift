@@ -105,6 +105,14 @@ protocol NowPlayingSource: AnyObject {
     func start()
     func perform(_ command: PlayerCommand)
     func seek(to seconds: TimeInterval)
+    /// The player's own volume, 0...1, when it can be read; nil when this source can't tell.
+    func volume(completion: @escaping (Double?) -> Void)
+    func setVolume(_ value: Double)
+}
+
+extension NowPlayingSource {
+    func volume(completion: @escaping (Double?) -> Void) { completion(nil) }
+    func setVolume(_ value: Double) {}
 }
 
 enum TimeFormat {

@@ -642,19 +642,20 @@ final class FirstMouseHostingView<Content: View>: NSHostingView<Content> {
 
 // MARK: - Volume
 
-/// A speaker and a slider for the Mac's output volume. The bar thickens and shows a thumb
-/// when the pointer is on it, the speaker icon steps through its waves as the level changes,
-/// and the percentage rises out of the bar while it is dragged.
+/// A speaker and a slider for the music's own volume (the Mac's volume is left alone).
+/// The bar thickens and shows a thumb when the pointer is on it, the speaker steps through
+/// its waves as the level changes, and the percentage rises above the thumb while dragging.
 struct VolumeSlider: View {
-    @ObservedObject private var volume = SystemVolume.shared
-    @State private var dragLevel: Float?
+    @ObservedObject var center: NowPlayingCenter
+    @State private var dragLevel: Double?
     @State private var hovering = false
+    @State private var beforeMute: Double = 0.5
 
-    private var shown: Float { volume.isMuted ? 0 : (dragLevel ?? volume.level) }
+    private var shown: Double { dragLevel ?? center.musicVolume ?? 0 }
 
     private var symbol: String {
         switch shown {
-        case 0: "speaker.slash.fill"
+        case ..<0.005: "speaker.slash.fill"
         case ..<0.34: "speaker.wave.1.fill"
         case ..<0.67: "speaker.wave.2.fill"
         default: "speaker.wave.3.fill"
@@ -664,7 +665,9 @@ struct VolumeSlider: View {
     var body: some View {
         let active = hovering || dragLevel != nil
         HStack(spacing: 10) {
-            Button { volume.toggleMute() } label: {
+            Button {
+                if shown > 0.005 { beforeMute = shown; center.setVolume(0) } else { center.setVolume(beforeMute) }
+            } label: {
                 Image(systemName: symbol)
                     .font(.system(size: 11, weight: .semibold))
                     .foregroundStyle(.white.opacity(active ? 0.85 : 0.5))
@@ -673,7 +676,7 @@ struct VolumeSlider: View {
                     .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            .help(volume.isMuted ? "Unmute" : "Mute")
+            .help("Mute")
 
             GeometryReader { geo in
                 let width = geo.size.width
@@ -692,7 +695,7 @@ struct VolumeSlider: View {
                                 .font(.system(size: 10, weight: .semibold).monospacedDigit())
                                 .foregroundStyle(.white.opacity(0.8))
                                 .fixedSize()
-                                .offset(x: x - thumb / 2 - 0, y: -17)
+                                .offset(y: -17)
                                 .opacity(dragLevel != nil ? 1 : 0)
                         }
                 }
@@ -703,9 +706,9 @@ struct VolumeSlider: View {
                 .gesture(
                     DragGesture(minimumDistance: 0)
                         .onChanged { value in
-                            let f = Float(min(1, max(0, (value.location.x - thumb / 2) / max(1, width - thumb))))
+                            let f = Double(min(1, max(0, (value.location.x - thumb / 2) / max(1, width - thumb))))
                             dragLevel = f
-                            volume.set(f)
+                            center.setVolume(f)
                         }
                         .onEnded { _ in dragLevel = nil }
                 )

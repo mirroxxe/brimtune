@@ -176,6 +176,30 @@ final class NowPlayingCenter: ObservableObject {
         source.perform(command)
     }
 
+    /// The current player's own volume (0...1); nil when it can't be read or set, which hides the slider.
+    @Published private(set) var musicVolume: Double?
+    private var volumeSendWork: DispatchWorkItem?
+
+    func refreshVolume() {
+        guard let source = activeSource else { if musicVolume != nil { musicVolume = nil }; return }
+        source.volume { [weak self] value in
+            guard let self, self.volumeSendWork == nil, value != self.musicVolume else { return }
+            self.musicVolume = value
+        }
+    }
+
+    /// Sets only the music's volume. Called on every drag step, so sends are spaced out.
+    func setVolume(_ value: Double) {
+        musicVolume = value
+        volumeSendWork?.cancel()
+        let work = DispatchWorkItem { [weak self] in
+            self?.activeSource?.setVolume(value)
+            self?.volumeSendWork = nil
+        }
+        volumeSendWork = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.06, execute: work)
+    }
+
     func seek(to seconds: TimeInterval) {
         guard let source = activeSource, var t = track else { return }
         t.elapsed = seconds

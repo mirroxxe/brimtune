@@ -116,6 +116,20 @@ final class ScriptableSource: NowPlayingSource {
         run("set player position to \(String(format: "%.2f", seconds))")
     }
 
+    func volume(completion: @escaping (Double?) -> Void) {
+        guard isRunning else { return completion(nil) }
+        let source = "tell application id \"\(player.bundleID)\" to return sound volume"
+        queue.async {
+            var error: NSDictionary?
+            let value = NSAppleScript(source: source)?.executeAndReturnError(&error).int32Value
+            DispatchQueue.main.async { completion(error == nil ? value.map { Double($0) / 100 } : nil) }
+        }
+    }
+
+    func setVolume(_ value: Double) {
+        run("set sound volume to \(Int((min(1, max(0, value)) * 100).rounded()))")
+    }
+
     private func run(_ body: String) {
         guard isRunning else { return }
         let source = "tell application id \"\(player.bundleID)\"\n\(body)\nend tell"

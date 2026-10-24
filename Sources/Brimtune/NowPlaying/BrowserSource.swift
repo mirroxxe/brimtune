@@ -834,6 +834,22 @@ final class BrowserSource: NowPlayingSource {
         }
     }
 
+    /// The page's own player volume (the media element's), not the Mac's.
+    func volume(completion: @escaping (Double?) -> Void) {
+        guard let tab = activeTab, tab.pageAccess else { return completion(nil) }
+        evaluate("(function(){var m=document.querySelector('video,audio');return m?String(m.volume):''})()", in: tab) { completion(Double($0)) }
+    }
+
+    func setVolume(_ value: Double) {
+        guard let tab = activeTab, tab.pageAccess else { return }
+        let v = min(1, max(0, value))
+        run("var m=document.querySelectorAll('video,audio');for(var i=0;i<m.length;i++)m[i].volume=\(v)", in: tab)
+        if tab.site == .youtubeMusic {
+            // The player keeps its own copy of the level and would put it back on the next song.
+            run(inPage("(function(){var b=document.querySelector('ytmusic-player-bar'),p=b&&(b.playerApi_||b.playerApi);if(p&&p.setVolume)p.setVolume(\(Int((v * 100).rounded())));return 'ok'})()"), in: tab)
+        }
+    }
+
     func seek(to seconds: TimeInterval) {
         guard let tab = activeTab else { return }
         guard tab.pageAccess else {

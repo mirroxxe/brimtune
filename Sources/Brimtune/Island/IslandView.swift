@@ -438,7 +438,6 @@ private struct ExpandedContent: View {
     var playSearch: (SearchResult) -> Void
     var dismissSearch: () -> Void
     var requestKeyboard: () -> Void
-    @ObservedObject private var volume = SystemVolume.shared
 
     var body: some View {
         VStack(spacing: 0) {
@@ -457,6 +456,13 @@ private struct ExpandedContent: View {
             }
         }
         .padding(.bottom, 16)
+        // The player's volume is read while the island is open, and follows changes made in the player itself.
+        .task {
+            while !Task.isCancelled {
+                center.refreshVolume()
+                try? await Task.sleep(for: .seconds(2))
+            }
+        }
         // The island takes exactly the height its content needs.
         .fixedSize(horizontal: false, vertical: true)
         .background {
@@ -571,8 +577,8 @@ private struct ExpandedContent: View {
                     .frame(width: 30)
             }
 
-            if volume.isAdjustable {
-                VolumeSlider()
+            if center.musicVolume != nil {
+                VolumeSlider(center: center)
                     .padding(.horizontal, 6)
                     .transition(.opacity.combined(with: .scale(scale: 0.96, anchor: .top)))
             }
