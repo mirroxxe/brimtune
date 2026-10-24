@@ -158,6 +158,9 @@ final class IslandController {
             requestKeyboard: { [weak self] in
                 guard let self else { return }
                 self.panel.allowsKey = true
+                // A panel of an inactive app can look focused yet never get the keystrokes, which is
+                // why the field needed several clicks; typing needs the app active.
+                NSApp.activate(ignoringOtherApps: true)
                 self.panel.makeKey()
             }
         )
@@ -399,8 +402,13 @@ final class IslandController {
             model.searchLoading = false
         }
         // Hand the keyboard back to the app that had it: the field shouldn't keep catching keystrokes.
+        let wasKey = panel.isKeyWindow
         panel.makeFirstResponder(nil)
         panel.allowsKey = false
+        // Give the keyboard back to the app that had it, unless a Brimtune window of its own is open.
+        if wasKey, !NSApp.windows.contains(where: { $0 !== panel && $0.isVisible && $0.canBecomeKey }) {
+            NSApp.deactivate()
+        }
         if panel.isKeyWindow {
             panel.orderOut(nil)
             panel.orderFrontRegardless()
