@@ -824,7 +824,8 @@ final class BrowserSource: NowPlayingSource {
         case (.spotify, .toggleShuffle): js = Self.clickTestID("control-button-shuffle")
         case (.spotify, .cycleRepeat): js = Self.clickTestID("control-button-repeat")
         case (.youtubeMusic, .playQueueItem(let index)):
-            js = "var e=document.querySelectorAll('ytmusic-player-queue-item')[\(index)]; if(e){var b=e.querySelector('ytmusic-play-button-renderer'); (b||e).click()}"
+            // A bare click() no longer starts the song; the play icon wants the full mouse sequence.
+            js = "var e=document.querySelectorAll('ytmusic-player-queue-item')[\(index)]; if(e){var b=e.querySelector('ytmusic-play-button-renderer'); var t=(b&&b.querySelector('yt-icon'))||b||e; ['mousedown','mouseup','click'].forEach(function(n){t.dispatchEvent(new MouseEvent(n,{bubbles:true,composed:true,cancelable:true}))})}"
         case (.spotify, .playQueueItem), (_, .like): return
         }
         brimtuneLog("sending %@ to %@", String(describing: command), browser.name)
