@@ -97,6 +97,15 @@ lyrics are sung by the scroll + live waveform → sideways cards (history, displ
 updates, free) → "The idea" + scrubbed marquee → install with a Privacy & Security mock → FAQ →
 closing with a giant wordmark. Checked at 1440×900 and 375×812.
 
+Later changes: the hero is centred over blurred colour fields (`.aurora`) with glass widgets;
+the tour has ten steps on a mock Mac (three scenes: browser, full-screen player, full-screen
+video) with a pointer that clicks what each step is about; the demo island's views mirror the
+app's open island (volume, search under the player, Up Next with arrows, playlist song list) and
+its height is measured into `--h` by `island.js`. When the app's island UI changes, update
+`#island` in `site/index.html` (the tour clones it). What's new = an update-window mock plus a
+timeline, built from `ReleaseNotes/` by `build-pages.mjs`. The link preview `site/assets/og.png`
+is rendered from `Tools/og.html` by `Tools/make-og.sh` (re-run it when the island or headline changes).
+
 ## Remaining release plan
 
 1. ~~Redesign the site~~ (done). 2. ~~Publish~~ (done 2026-10-23: the Pages project `brimtune` was

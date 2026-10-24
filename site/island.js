@@ -12,6 +12,20 @@
     tourIsland.inert = true;
   }
 
+  // The open island takes exactly the height its content needs, like the app's: measure the
+  // current view into --h whenever the state changes (and again once fonts have arrived).
+  function fit(el) {
+    const inner = el.querySelector(`.view-${el.dataset.state} .vi`);
+    if (inner) el.style.setProperty("--h", `${inner.offsetHeight}px`);
+    else el.style.removeProperty("--h");
+  }
+  window.brimtuneFit = fit;
+  [island, tourIsland].filter(Boolean).forEach((el) => {
+    new MutationObserver(() => fit(el)).observe(el, { attributes: true, attributeFilter: ["data-state"] });
+    fit(el);
+  });
+  document.fonts?.ready.then(() => [island, tourIsland].filter(Boolean).forEach(fit));
+
   // Made-up songs with made-up covers: three moods, three palettes.
   const tracks = [
     { title: "Night Bus Home", artist: "Lumen Field", length: 202, colors: ["#F2648E", "#7C6CF2", "#FFAE57"] },
@@ -29,7 +43,7 @@
   const clock = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
 
   function render() {
-    const state = hovering && ["compact", "idle", "expanded", "lyric", "timer"].includes(sectionState) ? "expanded" : sectionState;
+    const state = hovering && ["compact", "idle", "expanded", "timer"].includes(sectionState) ? "expanded" : sectionState;
     island.dataset.state = state;
     island.dataset.playing = String(playing);
     if (tourIsland) tourIsland.dataset.playing = String(playing);
@@ -142,7 +156,7 @@
     for (const { lines, words, visible } of blocks) {
       if (reducedMotion) { words.flat().forEach((w) => w.style.setProperty("--p", 1)); continue; }
       // Off-screen blocks rest, except the one the island is echoing.
-      const echoed = lines === blocks[0].lines && (sectionState === "lyric" || tourIsland?.dataset.state === "lyric");
+      const echoed = lines === blocks[0].lines && document.querySelector(".tour-stage")?.dataset.scene === "stage";
       if (!visible && !echoed) continue;
       const lineLength = (i) => words[i].length * wordTime + lineGap;
       const cycle = lines.reduce((sum, _, i) => sum + lineLength(i), 0);
@@ -173,7 +187,7 @@
     if (playing) {
       position = Math.min(position + dt, tracks[trackIndex].length);
       updateProgress();
-      if (lyricsVisible() || sectionState === "lyric" || tourIsland?.dataset.state === "lyric") lyricClock += dt;
+      if (lyricsVisible()) lyricClock += dt;
     }
     timerLeft = timerLeft > 0 ? timerLeft - dt : 25 * 60;
     countdowns.forEach((el) => (el.textContent = clock(timerLeft)));

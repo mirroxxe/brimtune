@@ -49,14 +49,28 @@ page("changelog", "What's new", `<h1>What's new</h1>
 ${entries}`);
 
 if (notes.length && existsSync(`${out}/index.html`)) {
-  // The three newest releases, as cards.
-  const block = notes.slice(0, 3).map((v, i) => {
-    const d = releaseDate(v);
-    return `<article class="whats-card">
-            <p class="whats-version"><strong>${v}</strong>${i === 0 ? '<span class="latest">Latest</span>' : ""}<time datetime="${d.iso}">${d.text}</time></p>
-            ${changes(v)}
+  // The newest release as the update window Brimtune itself shows, the next few as a timeline.
+  const latest = notes[0], ld = releaseDate(latest);
+  const window = `<article class="wn-window">
+            <div class="wn-bar"><i></i><i></i><i></i><span>Software Update</span></div>
+            <div class="wn-body">
+              <img class="wn-icon" src="/assets/icon-256.png" width="64" height="64" alt="">
+              <div class="wn-text">
+                <h3>A new version of Brimtune is available!</h3>
+                <p class="wn-sub">Brimtune <strong>${latest}</strong> is now available. <time datetime="${ld.iso}">${ld.text}</time></p>
+                <div class="wn-notes"><b>What's new</b>${changes(latest)}</div>
+                <div class="wn-actions"><span class="wn-btn">Skip This Version</span><span class="wn-btn">Remind Me Later</span><span class="wn-btn wn-primary">Install Update</span></div>
+              </div>
+            </div>
           </article>`;
-  }).join("\n          ");
+  const timeline = notes.slice(1, 5).map((v) => {
+    const d = releaseDate(v);
+    return `<li><span class="wn-dot" aria-hidden="true"></span><p class="wn-ver"><strong>${v}</strong><time datetime="${d.iso}">${d.text}</time></p>${changes(v)}</li>`;
+  }).join("\n            ");
+  const block = `<div class="wn-stage">${window}</div>
+          <ol class="wn-timeline">
+            ${timeline}
+          </ol>`;
   const home = readFileSync(`${out}/index.html`, "utf8");
   writeFileSync(`${out}/index.html`, home.replace("<!-- whats-new -->", block));
 }

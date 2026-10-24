@@ -222,27 +222,31 @@
     gsap.set("[data-reveal]", { opacity: 0 });
   }
 
-  // ---------- The tour: one island, eight things it does ----------
+  // ---------- The tour: one island, ten things it does, on a Mac that reacts ----------
 
   const tour = document.querySelector(".tour");
   const steps = [...tour.querySelectorAll("[data-step]")];
   const stage = tour.querySelector(".tour-stage");
   const tourIsland = tour.querySelector(".tour-island");
   const wrap = tour.querySelector(".tour-island-wrap");
+  const cursor = tour.querySelector(".cursor");
+  const cursorTip = tour.querySelector(".cursor-tip");
   const counter = tour.querySelector(".tour-n");
   const progressBar = tour.querySelector(".tour-progress span");
   const indexItems = [...tour.querySelectorAll(".tour-index li")];
+  tour.style.setProperty("--steps", steps.length);
   let stepIndex = -1;
-  let typing;
+  let typing, cursorTimer;
+  gsap.set(cursor, { x: 0, y: 0 });
 
-  // Scale the island so the current state fills the screen without spilling over.
+  // Scale the island so the current state sits well on the screen without spilling over.
   function fitIsland() {
     const style = getComputedStyle(tourIsland);
     const w = parseFloat(style.getPropertyValue("--w"));
-    const h = parseFloat(style.getPropertyValue("--h"));
+    const h = Math.max(parseFloat(style.getPropertyValue("--h")), 32);
     // The layout size, not the drawn one: the stage is still scaling up as it scrolls in.
     const box = { width: stage.clientWidth, height: stage.clientHeight };
-    const s = clamp(Math.min((box.width * 0.88) / w, (box.height * 0.8) / h, phone() ? 1.25 : 1.7), 0.6, 1.7);
+    const s = clamp(Math.min((box.width * (phone() ? 0.86 : 0.44)) / w, (box.height * 0.74) / h, 1.9), 0.5, 1.9);
     wrap.style.setProperty("--s", s.toFixed(3));
   }
 
@@ -260,15 +264,42 @@
     }, 70);
   }
 
+  // The pointer goes to the thing the step is about, once the island has settled, and clicks.
+  function moveCursor(step) {
+    clearTimeout(cursorTimer);
+    const selector = step.dataset.target;
+    const target = selector ? stage.querySelector(selector.startsWith(".tour-") ? selector : selector.startsWith(".stage-") ? selector : `.tour-island ${selector}`) : null;
+    if (!target || reduced) { cursor.style.opacity = 0; return; }
+    cursorTip.textContent = step.dataset.tip || "";
+    cursorTimer = setTimeout(() => {
+      const box = stage.getBoundingClientRect(), r = target.getBoundingClientRect();
+      // getBoundingClientRect includes the stage's own scale while it rises into place.
+      const k = box.width / stage.clientWidth || 1;
+      const x = (r.left + r.width * 0.5 - box.left) / k, y = (r.top + r.height * 0.5 - box.top) / k;
+      cursor.style.opacity = 1;
+      // The tip goes to the other side of the pointer when it would run off the stage.
+      cursor.classList.remove("flip");
+      cursor.classList.toggle("flip", x + 30 + cursorTip.offsetWidth > stage.clientWidth - 12);
+      gsap.to(cursor, {
+        x, y, duration: 1.1, ease: "power3.inOut",
+        onComplete: () => { cursor.classList.remove("click"); void cursor.offsetWidth; cursor.classList.add("click"); },
+      });
+    }, 850);
+  }
+
   function showStep(i) {
     if (i === stepIndex) return;
     stepIndex = i;
-    steps.forEach((step, k) => step.classList.toggle("on", k === i));
+    const step = steps[i];
+    steps.forEach((el, k) => el.classList.toggle("on", k === i));
     indexItems.forEach((item, k) => item.classList.toggle("on", k === i));
-    tourIsland.dataset.state = steps[i].dataset.step;
+    stage.dataset.scene = step.dataset.scene;
+    tourIsland.dataset.state = step.dataset.state;
+    window.brimtuneFit?.(tourIsland);
     counter.textContent = String(i + 1).padStart(2, "0");
     fitIsland();
-    if (steps[i].dataset.step === "search") typeQuery();
+    if (step.dataset.state === "search") typeQuery();
+    moveCursor(step);
   }
   showStep(0);
   ScrollTrigger.create({
@@ -277,8 +308,10 @@
       showStep(Math.min(steps.length - 1, Math.floor(self.progress * steps.length)));
       progressBar.style.transform = `scaleX(${self.progress})`;
     },
-    onRefresh: fitIsland,
+    onRefresh: () => { window.brimtuneFit?.(tourIsland); fitIsland(); },
   });
+  // The island's height is measured once fonts are in, which can change how it fits.
+  document.fonts?.ready.then(() => { window.brimtuneFit?.(tourIsland); fitIsland(); });
 
   // ---------- The full-screen player: scrolling sings the lyrics ----------
 
@@ -407,13 +440,15 @@
     document.querySelectorAll(".sect-grid > .label").forEach((label) => {
       gsap.fromTo(label, { clipPath: "inset(0 100% 0 0)" }, { clipPath: "inset(0 0% 0 0)", duration: 1.2, ease: "power3.out", scrollTrigger: { trigger: label, start: "top 90%" } });
     });
-    [".figure", ".whats-card", ".faq details"].forEach((selector) => {
+    [".figure", ".wn-timeline > li", ".faq details"].forEach((selector) => {
       gsap.set(selector, { opacity: 0, y: 44 });
       ScrollTrigger.batch(selector, {
         start: "top 90%",
         onEnter: (els) => gsap.to(els, { opacity: 1, y: 0, duration: 1.1, ease: "power3.out", stagger: 0.12, overwrite: true }),
       });
     });
+    gsap.fromTo(".wn-stage", { opacity: 0, y: 70, scale: 0.94 }, { opacity: 1, y: 0, scale: 1, duration: 1.3, ease: "power3.out", scrollTrigger: { trigger: ".wn-stage", start: "top 88%" } });
+    gsap.fromTo(".wn-window", { yPercent: 14 }, { yPercent: -10, ease: "none", scrollTrigger: { trigger: ".wn-stage", start: "top bottom", end: "bottom top", scrub: 0.6 } });
     gsap.fromTo(".whats-all", { opacity: 0, x: -16 }, { opacity: 1, x: 0, duration: 0.9, ease: "power3.out", scrollTrigger: { trigger: ".whats-all", start: "top 95%" } });
 
     // The tour's screen and the lock-screen MacBook's heading rise into place as they arrive.
@@ -443,7 +478,7 @@
     });
 
     // Cards tilt toward the pointer, in 3D.
-    document.querySelectorAll(".card, .whats-card, .settings").forEach((el) => {
+    document.querySelectorAll(".card, .settings").forEach((el) => {
       const rx = gsap.quickTo(el, "rotationX", { duration: 0.6, ease: "power3.out" });
       const ry = gsap.quickTo(el, "rotationY", { duration: 0.6, ease: "power3.out" });
       gsap.set(el, { transformPerspective: 900 });

@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<!-- Renders site/assets/og.png, the picture links to the site show: ./Tools/make-og.sh -->
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wght@0,300..900;1,300..900&family=Geist:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../site/styles.css">
+<style>
+  html, body { margin: 0; width: 1200px; height: 630px; overflow: hidden; background: #09070F; }
+  body { position: relative; font-family: var(--text); }
+  .aurora-field span { animation: none !important; }
+  .og-copy { position: absolute; left: 70px; top: 0; bottom: 0; width: 600px; display: flex; flex-direction: column; justify-content: center; color: #F4EFFA; }
+  .og-brand { display: flex; align-items: center; gap: 16px; margin-bottom: 38px; font: 600 28px/1 var(--display); letter-spacing: -.01em; }
+  .og-brand img { width: 64px; height: 64px; border-radius: 15px; box-shadow: 0 14px 30px -10px rgba(0,0,0,.6); }
+  h1 { margin: 0; font-size: 104px; line-height: .9; font-weight: 800; letter-spacing: -.045em; color: #F4EFFA; }
+  h1 em { display: block; font-weight: 300; font-style: italic; letter-spacing: -.035em; }
+  .og-sub { margin: 34px 0 0; font: 400 30px/1.35 var(--text); color: rgba(244,239,250,.78); }
+  .og-url { position: absolute; left: 70px; bottom: 44px; font: 500 22px/1 var(--text); color: rgba(244,239,250,.6); }
+  .og-island { position: absolute; left: 744px; top: 0; }
+  .og-island .island { --h: 446px; transition: none; }
+</style></head>
+<body>
+  <div class="aurora" style="opacity:1"><div class="aurora-field"><span></span><span></span><span></span><span></span><span class="ring"></span></div></div>
+  <div class="og-copy">
+    <div class="og-brand"><img src="../site/assets/icon-256.png" alt="">Brimtune</div>
+    <h1>Your notch,<em>playing along.</em></h1>
+    <p class="og-sub">Cover, controls and lyrics, right in your Mac's notch. Free.</p>
+  </div>
+  <p class="og-url">brimtune.pages.dev</p>
+  <div class="og-island"><div class="island" data-state="expanded" data-playing="true"><div class="island-body">
+    <div class="view view-x view-expanded"><div class="vi">
+          <div class="x-player">
+            <div class="player-row"><span class="cover cover-lg"></span><div class="track-meta"><strong class="track-title">Night Bus Home</strong><span class="track-artist">Lumen Field</span></div><span class="bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span></div>
+            <div class="progress"><span class="time-now">1:08</span><span class="bar"><span class="fill"></span></span><span class="time-left">-2:14</span></div>
+            <div class="controls">
+              <button type="button" class="ctl" data-action="prev" aria-label="Previous track"><svg viewBox="0 0 24 24"><path d="M11 7v10l-7-5zm9 0v10l-7-5z"/></svg></button>
+              <button type="button" class="ctl ctl-play" data-action="toggle" aria-label="Pause"><svg class="i-pause" viewBox="0 0 24 24"><path d="M7 5h3.5v14H7zm6.5 0H17v14h-3.5z"/></svg><svg class="i-play" viewBox="0 0 24 24"><path d="M8 5l11 7-11 7z"/></svg></button>
+              <button type="button" class="ctl" data-action="next" aria-label="Next track"><svg viewBox="0 0 24 24"><path d="M13 7v10l7-5zm-9 0v10l7-5z"/></svg></button>
+              <svg class="expand-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M10 20H4v-6M20 4l-7 7M4 20l7-7"/></svg>
+            </div>
+            <div class="volume"><svg class="spk" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9.5v5h3.6L12 19V5L6.6 9.5z"/><path class="w" d="M15.2 9.2a4 4 0 0 1 0 5.6"/></svg><span class="bar vol"><span class="vol-fill"></span></span><svg class="spk" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9.5v5h3.6L12 19V5L6.6 9.5z"/><path class="w" d="M15.2 9.2a4 4 0 0 1 0 5.6M17.6 6.8a7.4 7.4 0 0 1 0 10.4"/></svg></div>
+          </div>
+          <div class="search-field idle"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 3a7 7 0 1 0 4.2 12.6l5.1 5.1 1.4-1.4-5.1-5.1A7 7 0 0 0 10 3zm0 2a5 5 0 1 1 0 10 5 5 0 0 1 0-10z"/></svg><span class="ph">Search for a song</span></div>
+          <div class="x-row"><span class="x-title">Up Next</span><em class="chip">10</em><svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></div>
+          <div class="x-shelf"><div class="x-row"><span class="x-title">Playlists</span><svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></div>
+            <div class="shelf"><span class="pl"><span class="cover" style="--c1:#F2648E;--c2:#7C1F4F;--c3:#FFC0D3"></span><small>Night drive</small></span><span class="pl"><span class="cover" style="--c1:#3FB6C9;--c2:#1E3C8C;--c3:#C8F08F"></span><small>Focus</small></span><span class="pl"><span class="cover" style="--c1:#FF8A4C;--c2:#C2367A;--c3:#FFD36E"></span><small>Kyiv mornings</small></span><span class="pl"><span class="cover" style="--c1:#7C6CF2;--c2:#241D5C;--c3:#B6F0E4"></span><small>Liked music</small></span><span class="pl"><span class="cover" style="--c1:#9B8CF2;--c2:#2E2A6B;--c3:#E9D7FF"></span><small>Late</small></span></div></div>
+
+  </div></div></div>
+</body></html>
