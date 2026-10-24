@@ -201,7 +201,7 @@ private final class Tap {
         }
         AudioActivity.report(levels.max() ?? 0)
         let now = Date()
-        guard now.timeIntervalSince(lastEmit) > 1.0 / 30 else { return }
+        guard now.timeIntervalSince(lastEmit) > 1.0 / 24 else { return }
         lastEmit = now
         onLevels(smoothed)
     }

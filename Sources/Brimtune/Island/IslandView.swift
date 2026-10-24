@@ -92,6 +92,15 @@ private struct Shimmer<S: Shape>: ViewModifier, Animatable {
 
     func body(content: Content) -> some View {
         let strength = sin(.pi * min(max(progress, 0), 1))
+        // At rest nothing is drawn: a blurred, blended overlay kept at zero opacity still costs a render pass every frame.
+        if progress <= 0 || progress >= 1 {
+            content
+        } else {
+            shimmering(content, strength: strength)
+        }
+    }
+
+    private func shimmering(_ content: Content, strength: Double) -> some View {
         content
             .overlay {
                 GeometryReader { geo in

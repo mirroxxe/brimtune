@@ -160,38 +160,37 @@ struct Waveform: View {
         }
     }
 
-    private var live: some View {
-        gradient
-            .mask {
-                HStack(alignment: .center, spacing: spacing) {
-                    ForEach(0..<bars, id: \.self) { i in
-                        let band = levels.bands[min(i * levels.bands.count / bars, levels.bands.count - 1)]
-                        Capsule().frame(width: barWidth, height: barWidth + (height - barWidth) * CGFloat(band))
-                    }
-                }
-                .frame(height: height)
-            }
-            .frame(width: CGFloat(bars) * barWidth + CGFloat(bars - 1) * spacing, height: height)
-            .animation(.linear(duration: 0.07), value: levels.bands)
+    private var size: CGSize {
+        CGSize(width: CGFloat(bars) * barWidth + CGFloat(bars - 1) * spacing, height: height)
     }
 
-    private var gradient: LinearGradient {
-        LinearGradient(colors: [palette.accent, palette.secondary], startPoint: .leading, endPoint: .trailing)
+    /// Bars drawn into one Canvas with a gradient fill: no masks, so each frame is a single cheap layer.
+    private func draw(_ heights: [CGFloat]) -> some View {
+        let accent = palette.accent, secondary = palette.secondary
+        return Canvas { ctx, size in
+            var path = Path()
+            for (i, h) in heights.enumerated() {
+                let x = CGFloat(i) * (barWidth + spacing)
+                path.addRoundedRect(in: CGRect(x: x, y: (size.height - h) / 2, width: barWidth, height: h),
+                                    cornerSize: CGSize(width: barWidth / 2, height: barWidth / 2), style: .continuous)
+            }
+            ctx.fill(path, with: .linearGradient(Gradient(colors: [accent, secondary]),
+                                                 startPoint: .zero, endPoint: CGPoint(x: size.width, y: 0)))
+        }
+        .frame(width: size.width, height: size.height)
+    }
+
+    private var live: some View {
+        draw((0..<bars).map { i in
+            let band = levels.bands[min(i * levels.bands.count / bars, levels.bands.count - 1)]
+            return barWidth + (height - barWidth) * CGFloat(band)
+        })
     }
 
     private var simulated: some View {
         TimelineView(.animation(minimumInterval: 1 / 24, paused: !isPlaying)) { ctx in
             let t = ctx.date.timeIntervalSinceReferenceDate
-            LinearGradient(colors: [palette.accent, palette.secondary], startPoint: .leading, endPoint: .trailing)
-                .mask {
-                    HStack(alignment: .center, spacing: spacing) {
-                        ForEach(0..<bars, id: \.self) { i in
-                            Capsule().frame(width: barWidth, height: barHeight(i, t))
-                        }
-                    }
-                    .frame(height: height)
-                }
-                .frame(width: CGFloat(bars) * barWidth + CGFloat(bars - 1) * spacing, height: height)
+            draw((0..<bars).map { barHeight($0, t) })
         }
         .animation(.smooth(duration: 0.35), value: isPlaying)
     }
