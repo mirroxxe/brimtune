@@ -3,11 +3,14 @@
 // and scenes switch between their start and end instead of gliding.
 (() => {
   const { gsap, ScrollTrigger, Lenis } = window;
-  if (!gsap || !ScrollTrigger) return;
-  gsap.registerPlugin(ScrollTrigger);
-  document.documentElement.classList.add("motion");
-
+  const html = document.documentElement;
   const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  // Without the library (or with reduced motion) the hero simply shows, no intro.
+  if (!gsap || !ScrollTrigger) return html.classList.add("intro-done");
+  if (reduced) html.classList.add("intro-done");
+  gsap.registerPlugin(ScrollTrigger);
+  html.classList.add("motion");
+  const finePointer = matchMedia("(hover: hover) and (pointer: fine)").matches;
   const phone = () => innerWidth <= 760;
   const clamp = (v, lo, hi) => Math.min(Math.max(v, lo), hi);
 
@@ -102,16 +105,81 @@
   ScrollTrigger.addEventListener("refreshInit", sizeLock);
 
   gsap.set(device, { xPercent: -50, yPercent: -50, x: 0, y: 0 });
+  const chips = hero.querySelector(".hero-stage");
+  const afterWords = splitWords(after.querySelector("h2"), "ww");
+
+  // Each widget flies away from the centre, the way it sits around it.
+  const away = (axis, k) => (i, el) => {
+    const centre = axis === "x" ? el.offsetLeft + el.offsetWidth / 2 - chips.clientWidth / 2 : el.offsetTop + el.offsetHeight / 2 - chips.clientHeight / 2;
+    return centre * k;
+  };
+
   const heroTl = gsap.timeline({ defaults: { ease: "none" } })
-    .to(".hero-copy", { opacity: 0, y: -70, filter: "blur(14px)", duration: 0.32 }, 0)
-    .to(".hero-art", { yPercent: -60, rotate: -16, scale: 0.8, opacity: 0, duration: 0.42 }, 0)
+    // The widgets scatter and the headline lifts away, line by line.
+    .to(".hero-chip", { x: away("x", 1.1), y: away("y", 1.1), rotate: (i, el) => (el.offsetLeft > chips.clientWidth / 2 ? 14 : -14), scale: 0.7, opacity: 0, filter: "blur(14px)", duration: 0.34, ease: "power2.in" }, 0)
+    .to(".kicker", { y: -50, opacity: 0, duration: 0.2 }, 0)
+    .to(".h-line", { yPercent: (i) => (i ? -60 : -110), opacity: 0, filter: "blur(18px)", scale: 0.92, stagger: 0.05, duration: 0.3 }, 0.02)
+    .to(".hero-block", { y: -70, opacity: 0, filter: "blur(10px)", duration: 0.24 }, 0.04)
+    .to(".scroll-cue, .hero-grid", { opacity: 0, duration: 0.12 }, 0)
+    .to(".hero-copy", { opacity: 0, duration: 0.18 }, 0.14)
+    // A ring of light goes out from the middle as it happens.
+    .fromTo(".hero-pulse", { scale: 0.2, opacity: 0 }, { scale: 1.2, opacity: 0.5, duration: 0.14 }, 0)
+    .to(".hero-pulse", { scale: 2.6, opacity: 0, duration: 0.4, ease: "power1.out" }, 0.14)
+    // The light itself leans in while the screen steps back into a MacBook.
+    .to(".aurora-field", { scale: 1.3, rotate: 10, duration: 0.95 }, 0)
     .to(device, { width: () => finalBox().w, height: () => finalBox().h, y: () => finalBox().y, duration: 0.68, ease: "power2.inOut" }, 0.06)
     .to(screen, { "--r": () => (phone() ? "12px" : "22px"), "--bezel": () => (phone() ? 6 : 12), duration: 0.45 }, 0.3)
     .to(".mb-notch, .mb-base", { opacity: 1, duration: 0.2 }, 0.56)
     .to(lock, { opacity: 1, duration: 0.3 }, 0.32)
-    .fromTo(after, { opacity: 0, y: 50 }, { opacity: 1, y: 0, duration: 0.3 }, 0.52)
+    .fromTo(after, { opacity: 0, y: 50 }, { opacity: 1, y: 0, duration: 0.3 }, 0.5)
+    .fromTo(afterWords, { opacity: 0, yPercent: 70, filter: "blur(12px)" }, { opacity: 1, yPercent: 0, filter: "blur(0px)", stagger: 0.06, duration: 0.26, ease: "power2.out" }, 0.52)
     .to({}, { duration: 0.18 });
   scene(hero, heroTl, { flipAt: 0.25 });
+
+  // ---------- Hero intro: the light comes up, the headline rises, the widgets pop in ----------
+
+  if (!reduced) {
+    const pop = [".aurora", ".hero-grid", ".kicker [data-in]", ".h-word", ".hero-block [data-in]", ".chip-card", ".scroll-cue"].join(",");
+    const run = () => {
+      const intro = gsap.timeline({
+        defaults: { ease: "power3.out" },
+        onComplete: () => { html.classList.add("intro-done"); gsap.set(hero.querySelectorAll(pop), { clearProps: "all" }); },
+      });
+      intro
+        .fromTo(".hero .aurora", { opacity: 0 }, { opacity: 1, duration: 2.2, ease: "power2.out" }, 0)
+        .fromTo(".hero .hero-grid", { opacity: 0 }, { opacity: 1, duration: 2.4 }, 0.3)
+        .fromTo(".kicker [data-in]", { opacity: 0, y: 18, filter: "blur(8px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.9 }, 0.2)
+        .fromTo(".h-word", { yPercent: 110 }, { yPercent: 0, duration: 1.25, stagger: 0.1, ease: "power4.out" }, 0.3)
+        .fromTo(".hero-block [data-in]", { opacity: 0, y: 26, filter: "blur(8px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 1, stagger: 0.12 }, 0.85)
+        .fromTo(".chip-card", { opacity: 0, scale: 0.55, y: 40, filter: "blur(16px)" }, { opacity: 1, scale: 1, y: 0, filter: "blur(0px)", duration: 1.3, stagger: { each: 0.13, from: "random" }, ease: "back.out(1.6)" }, 0.7)
+        .fromTo(".scroll-cue", { opacity: 0 }, { opacity: 1, duration: 1 }, 1.8);
+    };
+    // Wait for the fonts, so the headline doesn't jump when they arrive.
+    Promise.race([document.fonts?.ready, new Promise((r) => setTimeout(r, 1200))]).then(run);
+  }
+
+  // ---------- The pointer: the light and the widgets lean toward it ----------
+
+  if (finePointer && !reduced) {
+    const target = { x: 0, y: 0 }, now = { x: 0, y: 0 };
+    let heroOn = true;
+    hero.addEventListener("pointermove", (e) => {
+      const r = screen.getBoundingClientRect();
+      target.x = ((e.clientX - r.left) / r.width) * 2 - 1;
+      target.y = ((e.clientY - r.top) / r.height) * 2 - 1;
+    });
+    hero.addEventListener("pointerleave", () => { target.x = 0; target.y = 0; });
+    ScrollTrigger.create({ trigger: hero, start: "top top", end: "+=60%", onToggle: (self) => (heroOn = self.isActive) });
+    gsap.ticker.add(() => {
+      if (!heroOn) return;
+      now.x += (target.x - now.x) * 0.06;
+      now.y += (target.y - now.y) * 0.06;
+      screen.style.setProperty("--mx", now.x.toFixed(4));
+      screen.style.setProperty("--my", now.y.toFixed(4));
+      screen.style.setProperty("--sx", (0.5 + now.x / 2).toFixed(4));
+      screen.style.setProperty("--sy", (0.5 + now.y / 2).toFixed(4));
+    });
+  }
 
   // ---------- Headings that arrive word by word, statements that sharpen as you read ----------
 
@@ -172,7 +240,8 @@
     const style = getComputedStyle(tourIsland);
     const w = parseFloat(style.getPropertyValue("--w"));
     const h = parseFloat(style.getPropertyValue("--h"));
-    const box = stage.getBoundingClientRect();
+    // The layout size, not the drawn one: the stage is still scaling up as it scrolls in.
+    const box = { width: stage.clientWidth, height: stage.clientHeight };
     const s = clamp(Math.min((box.width * 0.88) / w, (box.height * 0.8) / h, phone() ? 1.25 : 1.7), 0.6, 1.7);
     wrap.style.setProperty("--s", s.toFixed(3));
   }
@@ -314,6 +383,76 @@
     gsap.fromTo(".wordmark", { yPercent: 60 }, {
       yPercent: 12, ease: "none",
       scrollTrigger: { trigger: ".closing", start: "top bottom", end: "bottom bottom", scrub: 0.6 },
+    });
+  }
+
+  // ---------- Small things that make the whole page feel alive ----------
+
+  // A line along the bottom of the window fills as you read down the page.
+  gsap.to(".page-progress i", { scaleX: 1, ease: "none", scrollTrigger: { start: 0, end: "max", scrub: 0.3 } });
+
+  // The menu pill follows where you are.
+  const navLinks = [...document.querySelectorAll('.pillnav a[href^="#"]:not(.pill-cta)')];
+  navLinks.forEach((link) => {
+    const section = document.querySelector(link.getAttribute("href"));
+    if (!section) return;
+    ScrollTrigger.create({
+      trigger: section, start: "top 55%", end: "bottom 55%",
+      onToggle: (self) => link.classList.toggle("on", self.isActive),
+    });
+  });
+
+  if (!reduced) {
+    // Labels draw their line in; cards, rows and figures rise one after another.
+    document.querySelectorAll(".sect-grid > .label").forEach((label) => {
+      gsap.fromTo(label, { clipPath: "inset(0 100% 0 0)" }, { clipPath: "inset(0 0% 0 0)", duration: 1.2, ease: "power3.out", scrollTrigger: { trigger: label, start: "top 90%" } });
+    });
+    [".figure", ".whats-card", ".faq details"].forEach((selector) => {
+      gsap.set(selector, { opacity: 0, y: 44 });
+      ScrollTrigger.batch(selector, {
+        start: "top 90%",
+        onEnter: (els) => gsap.to(els, { opacity: 1, y: 0, duration: 1.1, ease: "power3.out", stagger: 0.12, overwrite: true }),
+      });
+    });
+    gsap.fromTo(".whats-all", { opacity: 0, x: -16 }, { opacity: 1, x: 0, duration: 0.9, ease: "power3.out", scrollTrigger: { trigger: ".whats-all", start: "top 95%" } });
+
+    // The tour's screen and the lock-screen MacBook's heading rise into place as they arrive.
+    gsap.fromTo(".tour-stage", { scale: 0.9, y: 90, borderRadius: 48 }, {
+      scale: 1, y: 0, borderRadius: phone() ? 20 : 32, ease: "none", immediateRender: false,
+      scrollTrigger: { trigger: tour, start: "top 95%", end: "top 15%", scrub: 0.6 },
+    });
+
+    // The closing light breathes in as the footer comes near.
+    gsap.fromTo(".closing .aurora-field", { scale: 1.35, rotate: -14 }, {
+      scale: 1, rotate: 0, ease: "none",
+      scrollTrigger: { trigger: ".closing", start: "top bottom", end: "center center", scrub: 0.6 },
+    });
+  }
+
+  if (finePointer && !reduced) {
+    // Buttons lean toward the pointer a little.
+    document.querySelectorAll(".magnetic, .pill-cta, .closing .button").forEach((el) => {
+      const x = gsap.quickTo(el, "x", { duration: 0.5, ease: "power3.out" });
+      const y = gsap.quickTo(el, "y", { duration: 0.5, ease: "power3.out" });
+      el.addEventListener("pointermove", (e) => {
+        const r = el.getBoundingClientRect();
+        x((e.clientX - (r.left + r.width / 2)) * 0.28);
+        y((e.clientY - (r.top + r.height / 2)) * 0.4);
+      });
+      el.addEventListener("pointerleave", () => { x(0); y(0); });
+    });
+
+    // Cards tilt toward the pointer, in 3D.
+    document.querySelectorAll(".card, .whats-card, .settings").forEach((el) => {
+      const rx = gsap.quickTo(el, "rotationX", { duration: 0.6, ease: "power3.out" });
+      const ry = gsap.quickTo(el, "rotationY", { duration: 0.6, ease: "power3.out" });
+      gsap.set(el, { transformPerspective: 900 });
+      el.addEventListener("pointermove", (e) => {
+        const r = el.getBoundingClientRect();
+        ry(((e.clientX - r.left) / r.width - 0.5) * 7);
+        rx(-((e.clientY - r.top) / r.height - 0.5) * 7);
+      });
+      el.addEventListener("pointerleave", () => { rx(0); ry(0); });
     });
   }
 

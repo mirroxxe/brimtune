@@ -18,10 +18,15 @@
   <link rel="stylesheet" href="/styles.css">
   <!-- Where "Buy me a coffee" goes. While it's empty, Download downloads straight away. -->
   <meta name="brimtune-donate" content="https://ko-fi.com/brimtune">
-  <script>document.documentElement.classList.add("js");</script>
+  <script>
+    // "js" hides the hero's first frame until its intro plays; if the scripts never come, show it anyway.
+    document.documentElement.classList.add("js");
+    setTimeout(function () { document.documentElement.classList.add("intro-done"); }, 4000);
+  </script>
 </head>
 <body>
   <a class="skip" href="#main">Skip to content</a>
+  <div class="page-progress" aria-hidden="true"><i></i></div>
 
   <header class="topbar">
     <nav class="pillnav" aria-label="Main">
@@ -104,20 +109,54 @@
       <div class="hero-sticky">
         <div class="device" id="device">
           <div class="screen">
-            <div class="wallpaper" aria-hidden="true"><span></span><span></span><span></span></div>
-            <div class="hero-art record" aria-hidden="true"><span class="record-label"><b>brimtune</b><i>Side A · 33⅓</i></span></div>
+            <!-- The light: blurred colour fields in the current cover's colours, a hairline grid, a soft spotlight. -->
+            <div class="aurora" aria-hidden="true"><div class="aurora-field"><span></span><span></span><span></span><span></span><span class="ring"></span></div></div>
+            <div class="hero-grid" aria-hidden="true"></div>
+            <div class="hero-spot" aria-hidden="true"></div>
+            <div class="hero-pulse" aria-hidden="true"></div>
+
+            <!-- The island's little moments, floating around the headline. -->
+            <div class="hero-stage" aria-hidden="true">
+              <div class="hero-chip chip-player" style="--d:30"><div class="chip-float"><div class="chip-card glass">
+                <span class="cover chip-cover"></span>
+                <span class="chip-text"><strong class="track-title">Night Bus Home</strong><span class="track-artist">Lumen Field</span></span>
+                <span class="bars"><i></i><i></i><i></i><i></i></span>
+                <span class="bar chip-bar"><span class="fill"></span></span>
+              </div></div></div>
+              <div class="hero-chip chip-lyric" style="--d:22"><div class="chip-float"><div class="chip-card glass">
+                <span class="chip-label">Lyrics, word by word</span>
+                <span class="island-line chip-line">with the windows down</span>
+              </div></div></div>
+              <div class="hero-chip chip-timer" style="--d:38"><div class="chip-float"><div class="chip-card glass">
+                <svg class="chip-ico amber" viewBox="0 0 24 24"><path d="M9 2h6v2H9zm3 4a8 8 0 1 0 0 16 8 8 0 0 0 0-16zm1 8.6V9h-2v6.4l4.2 2.5 1-1.7z"/></svg>
+                <span class="chip-text"><small>Timer</small><strong class="countdown">24:59</strong></span>
+              </div></div></div>
+              <div class="hero-chip chip-pods" style="--d:18"><div class="chip-float"><div class="chip-card glass">
+                <svg class="chip-ico" viewBox="0 0 24 24"><path d="M6.5 3A3.5 3.5 0 0 0 3 6.5c0 1.6 1 2.9 2.5 3.3V19a1.5 1.5 0 0 0 3 0V6.5A3.5 3.5 0 0 0 6.5 3zm11 0A3.5 3.5 0 0 0 14 6.5V19a1.5 1.5 0 0 0 3 0V9.8c1.5-.4 2.5-1.7 2.5-3.3A3.5 3.5 0 0 0 17.5 3z"/></svg>
+                <span class="chip-text"><small>Connected</small><strong>AirPods Pro</strong></span>
+                <span class="battery"><span class="battery-bar"><span></span></span>82</span>
+              </div></div></div>
+              <div class="hero-chip chip-meeting" style="--d:26"><div class="chip-float"><div class="chip-card glass">
+                <span class="meeting-icon" aria-hidden="true">23</span>
+                <span class="chip-text"><small>In 5 minutes</small><strong>Design review</strong></span>
+                <span class="join">Join</span>
+              </div></div></div>
+            </div>
+
             <div class="hero-copy">
-              <p class="kicker">Brimtune for Mac</p>
-              <h1>Your notch, <em>playing&nbsp;along.</em></h1>
-              <div class="hero-row">
-                <p class="lede">Brimtune turns the notch on your Mac into a small stage for whatever you're listening to. Cover, controls and lyrics, right where your eyes already are.</p>
-                <div class="hero-cta">
-                  <a class="button button-light" href="/Brimtune.dmg" download>Download for Mac</a>
-                  <p class="fineprint">Free. macOS 14 or later, Apple silicon and Intel.</p>
+              <p class="kicker"><span class="kicker-pill" data-in><i class="dot"></i>Free for macOS 14 or later</span></p>
+              <h1><span class="h-line"><span class="h-word">Your</span> <span class="h-word">notch,</span></span> <span class="h-line"><em><span class="h-word">playing</span> <span class="h-word">along.</span></em></span></h1>
+              <div class="hero-block">
+                <p class="lede" data-in>Brimtune turns the notch on your Mac into a small stage for whatever you're listening to. Cover, controls and lyrics, right where your eyes already are.</p>
+                <div class="hero-cta" data-in>
+                  <a class="button button-light magnetic" href="/Brimtune.dmg" download>Download for Mac</a>
+                  <a class="button-ghost" href="#features">See what it does</a>
                 </div>
+                <p class="fineprint" data-in>Free, no account. Apple silicon and Intel.</p>
               </div>
               <p class="hint" id="hint">Hover the island at the top to try it.</p>
             </div>
+            <div class="scroll-cue" aria-hidden="true"><i></i><span>Scroll</span></div>
             <!-- The lock screen, drawn at the size the screen ends up, so nothing reflows while it shrinks. -->
             <div class="lock" aria-label="Brimtune on the macOS lock screen" role="img">
               <div class="lock-inner">
@@ -379,7 +418,7 @@
     </section>
 
     <section class="closing" data-island="compact">
-      <div class="wallpaper" aria-hidden="true"><span></span><span></span><span></span></div>
+      <div class="aurora" aria-hidden="true"><div class="aurora-field"><span></span><span></span><span></span><span></span><span class="ring"></span></div></div>
       <div class="closing-inner">
         <h2 data-words>Give your notch <em>something to do.</em></h2>
         <a class="button button-light" href="/Brimtune.dmg" download>Download for Mac</a>
