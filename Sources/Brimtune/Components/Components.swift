@@ -557,9 +557,11 @@ private struct SongRow: View {
                     } else {
                         Text("\(index)").font(.system(size: 11 * scale, weight: .medium).monospacedDigit())
                             .foregroundStyle(.white.opacity(0.4))
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.7)
                     }
                 }
-                .frame(width: 20 * scale)
+                .frame(width: 26 * scale)
                 QueueArtwork(url: song.artwork, cornerRadius: 5 * scale)
                     .frame(width: 32 * scale, height: 32 * scale)
                 VStack(alignment: .leading, spacing: 0) {
