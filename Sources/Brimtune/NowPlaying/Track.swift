@@ -70,10 +70,10 @@ struct TrackSnapshot: Equatable {
 
     var id: String { "\(title)\u{1F}\(artist)\u{1F}\(album)" }
 
-    /// The next distinct songs: no repeats of the current one or of each other.
+    /// The next distinct songs (the island pages through them three at a time): no repeats of the current one or of each other.
     var upNext: [QueueItem] {
         var seen: Set<String> = ["\(title)|\(artist)"]
-        return Array(queue.filter { seen.insert("\($0.title)|\($0.artist)").inserted }.prefix(3))
+        return Array(queue.filter { seen.insert("\($0.title)|\($0.artist)").inserted }.prefix(12))
     }
 
     func position(at date: Date) -> TimeInterval {

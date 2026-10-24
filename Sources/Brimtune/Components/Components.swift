@@ -381,20 +381,25 @@ struct QueueArtwork: View {
     var cornerRadius: CGFloat = 6
 
     var body: some View {
-        AsyncImage(url: url.flatMap { $0.scheme == "data" ? nil : $0 }, transaction: Transaction(animation: .smooth(duration: 0.3))) { phase in
-            if case .success(let image) = phase {
-                image.resizable().aspectRatio(contentMode: .fill).transition(.opacity)
-            } else {
-                ZStack {
-                    LinearGradient(colors: [Color(white: 0.26), Color(white: 0.16)], startPoint: .top, endPoint: .bottom)
-                    Image(systemName: "music.note")
-                        .font(.system(size: 11, weight: .medium))
-                        .foregroundStyle(.white.opacity(0.4))
+        // The slot's size comes from the frame the caller gives it; a wide thumbnail
+        // is cropped inside it instead of stretching the row into the text beside it.
+        Color.clear
+            .overlay {
+                AsyncImage(url: url.flatMap { $0.scheme == "data" ? nil : $0 }, transaction: Transaction(animation: .smooth(duration: 0.3))) { phase in
+                    if case .success(let image) = phase {
+                        image.resizable().aspectRatio(contentMode: .fill).transition(.opacity)
+                    } else {
+                        ZStack {
+                            LinearGradient(colors: [Color(white: 0.26), Color(white: 0.16)], startPoint: .top, endPoint: .bottom)
+                            Image(systemName: "music.note")
+                                .font(.system(size: 11, weight: .medium))
+                                .foregroundStyle(.white.opacity(0.4))
+                        }
+                    }
                 }
             }
-        }
-        .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous).strokeBorder(.white.opacity(0.08), lineWidth: 0.5))
+            .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous).strokeBorder(.white.opacity(0.08), lineWidth: 0.5))
     }
 }
 

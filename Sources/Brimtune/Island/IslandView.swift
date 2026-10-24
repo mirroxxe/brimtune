@@ -474,29 +474,34 @@ private struct ExpandedContent: View {
         VStack(spacing: 0) {
             if let track = center.track {
                 playing(track)
-                let upNext = track.upNext
-                if !upNext.isEmpty {
-                    UpNextRow(items: upNext) { center.perform(.playQueueItem($0)) }
-                        .padding(.top, 14)
-                        .transition(.opacity)
-                }
-            }
-            if !center.playlists.isEmpty {
-                PlaylistShelf(playlists: center.playlists, play: { list in
-                    center.play(list)
-                    dismissSearch()
-                }, open: { list in
-                    withAnimation(.spring(response: 0.45, dampingFraction: 0.9)) { model.openPlaylist = list }
-                })
-                .padding(.top, 12)
-            }
-            activityRows
-                .padding(.top, center.track == nil ? 6 : 10)
-            if center.track == nil && !activities.hasLiveActivity && !model.isSearching {
-                nothingPlaying
             }
             SearchArea(model: model, play: playSearch, dismiss: dismissSearch, requestKeyboard: requestKeyboard)
-                .padding(.top, 14)
+                .padding(.top, center.track == nil ? 6 : 14)
+            // While results are on screen they have the island to themselves.
+            if model.searchResults.isEmpty {
+                if let track = center.track {
+                    let upNext = track.upNext
+                    if !upNext.isEmpty {
+                        UpNextRow(items: upNext) { center.perform(.playQueueItem($0)) }
+                            .padding(.top, 12)
+                            .transition(.opacity)
+                    }
+                }
+                if !center.playlists.isEmpty {
+                    PlaylistShelf(playlists: center.playlists, play: { list in
+                        center.play(list)
+                        dismissSearch()
+                    }, open: { list in
+                        withAnimation(.spring(response: 0.45, dampingFraction: 0.9)) { model.openPlaylist = list }
+                    })
+                    .padding(.top, 12)
+                }
+                activityRows
+                    .padding(.top, 10)
+                if center.track == nil && !activities.hasLiveActivity && !model.isSearching {
+                    nothingPlaying
+                }
+            }
         }
     }
 
@@ -638,8 +643,11 @@ private struct SearchArea: View {
             // The island only takes the keyboard once you click into the field.
             .contentShape(Rectangle())
             .simultaneousGesture(TapGesture().onEnded {
+                // The panel has to become key before the field can take focus; a field that
+                // still thinks it is focused from an earlier click needs a fresh start.
                 requestKeyboard()
-                DispatchQueue.main.async { focused = true }
+                focused = false
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { focused = true }
             })
 
             if !model.searchResults.isEmpty {
@@ -693,46 +701,81 @@ private struct UpNextRow: View {
     /// Remembered between sessions; the island resizes itself around the change.
     @AppStorage("upNextCollapsed") private var collapsed = false
     @State private var hoveringHeader = false
+    @State private var page = 0
+
+    private static let pageSize = 3
 
     var body: some View {
+        let pages = max(1, (items.count + Self.pageSize - 1) / Self.pageSize)
+        let current = min(page, pages - 1)
+        let shown = Array(items.dropFirst(current * Self.pageSize).prefix(Self.pageSize))
         VStack(alignment: .leading, spacing: 2) {
-            Button {
-                withAnimation(.spring(response: 0.45, dampingFraction: 0.88)) { collapsed.toggle() }
-            } label: {
-                HStack(spacing: 6) {
-                    Text("Up Next")
-                        .font(.system(size: 11, weight: .semibold))
-                        .foregroundStyle(.white.opacity(hoveringHeader ? 0.7 : 0.45))
-                    if collapsed {
-                        Text("\(items.count)")
-                            .font(.system(size: 10, weight: .bold).monospacedDigit())
-                            .foregroundStyle(.white.opacity(0.6))
-                            .padding(.horizontal, 6).padding(.vertical, 1)
-                            .background(.white.opacity(0.1), in: Capsule())
-                            .transition(.opacity.combined(with: .scale(scale: 0.8)))
+            HStack(spacing: 4) {
+                Button {
+                    withAnimation(.spring(response: 0.45, dampingFraction: 0.88)) { collapsed.toggle() }
+                } label: {
+                    HStack(spacing: 6) {
+                        Text("Up Next")
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundStyle(.white.opacity(hoveringHeader ? 0.7 : 0.45))
+                        if collapsed {
+                            Text("\(items.count)")
+                                .font(.system(size: 10, weight: .bold).monospacedDigit())
+                                .foregroundStyle(.white.opacity(0.6))
+                                .padding(.horizontal, 6).padding(.vertical, 1)
+                                .background(.white.opacity(0.1), in: Capsule())
+                                .transition(.opacity.combined(with: .scale(scale: 0.8)))
+                        }
+                        Spacer()
                     }
-                    Spacer()
+                    .padding(.leading, 6)
+                    .frame(height: 22)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .help(collapsed ? "Show up next" : "Hide up next")
+
+                if !collapsed && pages > 1 {
+                    pager("chevron.left", enabled: current > 0) { page = current - 1 }
+                    pager("chevron.right", enabled: current < pages - 1) { page = current + 1 }
+                }
+                Button {
+                    withAnimation(.spring(response: 0.45, dampingFraction: 0.88)) { collapsed.toggle() }
+                } label: {
                     Image(systemName: "chevron.down")
                         .font(.system(size: 10, weight: .bold))
                         .foregroundStyle(.white.opacity(hoveringHeader ? 0.75 : 0.4))
                         .rotationEffect(.degrees(collapsed ? -90 : 0))
+                        .frame(width: 22, height: 22)
+                        .contentShape(Rectangle())
                 }
-                .padding(.horizontal, 6)
-                .frame(height: 22)
-                .contentShape(Rectangle())
+                .buttonStyle(.plain)
+                .padding(.trailing, 2)
             }
-            .buttonStyle(.plain)
             .onHover { over in withAnimation(.smooth(duration: 0.15)) { hoveringHeader = over } }
-            .help(collapsed ? "Show up next" : "Hide up next")
 
             if !collapsed {
-                ForEach(items) { item in
+                ForEach(shown) { item in
                     UpNextItem(item: item) { play(item.id) }
                 }
                 .transition(.opacity.combined(with: .move(edge: .top)))
             }
         }
         .clipped()
+    }
+
+    private func pager(_ symbol: String, enabled: Bool, action: @escaping () -> Void) -> some View {
+        Button {
+            withAnimation(.smooth(duration: 0.25)) { action() }
+        } label: {
+            Image(systemName: symbol)
+                .font(.system(size: 10, weight: .bold))
+                .foregroundStyle(.white.opacity(enabled ? 0.7 : 0.18))
+                .frame(width: 22, height: 22)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .disabled(!enabled)
     }
 }
 

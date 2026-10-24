@@ -193,7 +193,7 @@ final class BrowserSource: NowPlayingSource {
       items.forEach(function(e, i){ if (e.hasAttribute('selected')) cur = i; });
       if (cur >= 0) {
         var text = function(e, s){ var x = e.querySelector(s); return x ? x.textContent.trim() : ''; };
-        o.queue = items.slice(cur + 1, cur + 4).map(function(e, k){
+        o.queue = items.slice(cur + 1, cur + 13).map(function(e, k){
           var img = e.querySelector('img');
           return { i: cur + 1 + k, t: text(e, '.song-title'), a: text(e, '.byline'), img: img ? img.src : '' };
         });
