@@ -101,7 +101,7 @@ Later changes: the hero is centred over blurred colour fields (`.aurora`) with g
 the tour has ten steps on a mock Mac (three scenes: browser, full-screen player, full-screen
 video) with a pointer that clicks what each step is about; the demo island's views mirror the
 app's open island (volume, search under the player, Up Next with arrows, playlist song list) and
-its height is measured into `--h` by `island.js`. When the app's island UI changes, update
+its height is measured into `--h` by `island.js`. `site/tour.js` plays a short film per tour step (pointer, hover, drag, typing, menus, alerts, full screen) as a looping GSAP timeline; `motion.js` only picks the step. When the app's island UI changes, update
 `#island` in `site/index.html` (the tour clones it). What's new = an update-window mock plus a
 timeline, built from `ReleaseNotes/` by `build-pages.mjs`. The link preview `site/assets/og.png`
 is rendered from `Tools/og.html` by `Tools/make-og.sh` (re-run it when the island or headline changes).

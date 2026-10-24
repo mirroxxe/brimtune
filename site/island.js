@@ -20,6 +20,12 @@
     else el.style.removeProperty("--h");
   }
   window.brimtuneFit = fit;
+  // After a tour film has picked a song for its island, put the page's song back.
+  window.brimtuneRestoreTrack = () => {
+    const t = tracks[trackIndex];
+    document.querySelectorAll(".tour-island .track-title").forEach((el) => (el.textContent = t.title));
+    document.querySelectorAll(".tour-island .track-artist").forEach((el) => (el.textContent = t.artist));
+  };
   [island, tourIsland].filter(Boolean).forEach((el) => {
     new MutationObserver(() => fit(el)).observe(el, { attributes: true, attributeFilter: ["data-state"] });
     fit(el);
@@ -38,12 +44,16 @@
   let position = 68;
   let sectionState = "compact";
   let hovering = false;
+  let peekTimer;
 
   const $ = (sel) => document.querySelectorAll(sel);
   const clock = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
 
+  let peeking = false;
   function render() {
-    const state = hovering && ["compact", "idle", "expanded", "timer"].includes(sectionState) ? "expanded" : sectionState;
+    const base = hovering && ["compact", "idle", "expanded", "timer"].includes(sectionState) ? "expanded" : sectionState;
+    // A new song in the compact island opens it for a moment to name itself, like the app's.
+    const state = peeking && base === "compact" ? "peek" : base;
     island.dataset.state = state;
     island.dataset.playing = String(playing);
     if (tourIsland) tourIsland.dataset.playing = String(playing);
@@ -55,10 +65,17 @@
     root.style.setProperty("--a1", t.colors[0]);
     root.style.setProperty("--a2", t.colors[1]);
     root.style.setProperty("--a3", t.colors[2]);
-    document.querySelectorAll(".track-title").forEach((el) => (el.textContent = t.title));
-    document.querySelectorAll(".track-artist").forEach((el) => (el.textContent = t.artist));
+    // The tour's island (data-lock) is showing a song its script picked; leave that one alone.
+    document.querySelectorAll(".track-title:not([data-lock] *)").forEach((el) => (el.textContent = t.title));
+    document.querySelectorAll(".track-artist:not([data-lock] *)").forEach((el) => (el.textContent = t.artist));
     position = 0;
     updateProgress();
+    if (shimmer && !reducedMotion && sectionState === "compact" && !hovering) {
+      peeking = true;
+      render();
+      clearTimeout(peekTimer);
+      peekTimer = setTimeout(() => { peeking = false; render(); }, 2800);
+    }
     if (shimmer && !reducedMotion) {
       island.classList.remove("shimmer");
       void island.offsetWidth; // restart the animation
@@ -126,6 +143,7 @@
 
   // Timers count down for real, in the island and in the timer tile.
   let timerLeft = 25 * 60;
+  window.brimtuneTimerReset = () => { timerLeft = 25 * 60; };
   const countdowns = document.querySelectorAll(".countdown");
 
   // Lyrics: every karaoke block lights its words in turn, on one shared clock;
@@ -151,6 +169,11 @@
   const wordTime = 0.42;
   const lineGap = 0.7;
   let lyricClock = 0;
+  // Jump the shared lyric clock to the start of one line: what clicking a line does in the app.
+  window.brimtuneSeekLine = (index) => {
+    const { words } = blocks[blocks.length - 1];
+    lyricClock = words.slice(0, index).reduce((sum, w) => sum + w.length * wordTime + lineGap, 0);
+  };
 
   function paintLyrics() {
     for (const { lines, words, visible } of blocks) {

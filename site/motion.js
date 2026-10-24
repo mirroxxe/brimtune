@@ -229,15 +229,11 @@
   const stage = tour.querySelector(".tour-stage");
   const tourIsland = tour.querySelector(".tour-island");
   const wrap = tour.querySelector(".tour-island-wrap");
-  const cursor = tour.querySelector(".cursor");
-  const cursorTip = tour.querySelector(".cursor-tip");
   const counter = tour.querySelector(".tour-n");
   const progressBar = tour.querySelector(".tour-progress span");
   const indexItems = [...tour.querySelectorAll(".tour-index li")];
   tour.style.setProperty("--steps", steps.length);
   let stepIndex = -1;
-  let typing, cursorTimer;
-  gsap.set(cursor, { x: 0, y: 0 });
 
   // Scale the island so the current state sits well on the screen without spilling over.
   function fitIsland() {
@@ -250,42 +246,21 @@
     wrap.style.setProperty("--s", s.toFixed(3));
   }
 
-  // The search step types its query, like someone's using it.
-  function typeQuery() {
-    const field = tourIsland.querySelector(".typed");
-    const query = "paper moons";
-    clearInterval(typing);
-    if (reduced) return (field.textContent = query);
-    let n = 0;
-    field.textContent = "";
-    typing = setInterval(() => {
-      field.textContent = query.slice(0, ++n);
-      if (n >= query.length) clearInterval(typing);
-    }, 70);
-  }
+  window.brimtuneFitStage = fitIsland;
 
-  // The pointer goes to the thing the step is about, once the island has settled, and clicks.
-  function moveCursor(step) {
-    clearTimeout(cursorTimer);
-    const selector = step.dataset.target;
-    const target = selector ? stage.querySelector(selector.startsWith(".tour-") ? selector : selector.startsWith(".stage-") ? selector : `.tour-island ${selector}`) : null;
-    if (!target || reduced) { cursor.style.opacity = 0; return; }
-    cursorTip.textContent = step.dataset.tip || "";
-    cursorTimer = setTimeout(() => {
-      const box = stage.getBoundingClientRect(), r = target.getBoundingClientRect();
-      // getBoundingClientRect includes the stage's own scale while it rises into place.
-      const k = box.width / stage.clientWidth || 1;
-      const x = (r.left + r.width * 0.5 - box.left) / k, y = (r.top + r.height * 0.5 - box.top) / k;
-      cursor.style.opacity = 1;
-      // The tip goes to the other side of the pointer when it would run off the stage.
-      cursor.classList.remove("flip");
-      cursor.classList.toggle("flip", x + 30 + cursorTip.offsetWidth > stage.clientWidth - 12);
-      gsap.to(cursor, {
-        x, y, duration: 1.1, ease: "power3.inOut",
-        onComplete: () => { cursor.classList.remove("click"); void cursor.offsetWidth; cursor.classList.add("click"); },
-      });
-    }, 850);
-  }
+  // Each step's headline arrives word by word (CSS staggers them by --i).
+  steps.forEach((step) => {
+    splitWords(step.querySelector("h3"), "ww").forEach((w, i) => w.style.setProperty("--i", i));
+  });
+
+  // The big step number rolls to the next one.
+  const numberRoll = (text) => {
+    if (reduced) return (counter.textContent = text);
+    gsap.timeline()
+      .to(counter, { yPercent: -110, duration: 0.2, ease: "power2.in" })
+      .call(() => (counter.textContent = text))
+      .fromTo(counter, { yPercent: 110 }, { yPercent: 0, duration: 0.55, ease: "power3.out" });
+  };
 
   function showStep(i) {
     if (i === stepIndex) return;
@@ -296,10 +271,10 @@
     stage.dataset.scene = step.dataset.scene;
     tourIsland.dataset.state = step.dataset.state;
     window.brimtuneFit?.(tourIsland);
-    counter.textContent = String(i + 1).padStart(2, "0");
+    numberRoll(String(i + 1).padStart(2, "0"));
     fitIsland();
-    if (step.dataset.state === "search") typeQuery();
-    moveCursor(step);
+    // The step's own little film: a pointer, things reacting.
+    window.brimtuneTour?.enter(step.dataset.step);
   }
   showStep(0);
   ScrollTrigger.create({
@@ -309,6 +284,7 @@
       progressBar.style.transform = `scaleX(${self.progress})`;
     },
     onRefresh: () => { window.brimtuneFit?.(tourIsland); fitIsland(); },
+    onToggle: (self) => window.brimtuneTour?.pause(!self.isActive),
   });
   // The island's height is measured once fonts are in, which can change how it fits.
   document.fonts?.ready.then(() => { window.brimtuneFit?.(tourIsland); fitIsland(); });
