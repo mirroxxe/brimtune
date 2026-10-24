@@ -460,8 +460,10 @@ final class IslandController {
         guard preferences.islandEnabled, model.mode != .hidden || model.hasNotch else { return }
         let inside = isMouseInside(margin: model.mode == .expanded ? 12 : 2)
         if inside == (hovering || pinnedOpen) { hoverWork?.cancel(); return }
-        // Mid-search the island stays put; a click elsewhere or Esc closes it.
-        if !inside && model.isSearching { hoverWork?.cancel(); return }
+        // With something typed or found the island stays put (a click elsewhere or Esc closes it);
+        // an empty field that merely has focus must not hold the island open.
+        let typing = !model.searchQuery.isEmpty || !model.searchResults.isEmpty
+        if !inside && typing { hoverWork?.cancel(); return }
         if inside && !preferences.expandOnHover { return }
 
         hoverWork?.cancel()
@@ -470,11 +472,14 @@ final class IslandController {
             let stillInside = self.isMouseInside(margin: self.model.mode == .expanded ? 12 : 2)
             guard stillInside == inside else { return }
             self.hovering = inside
-            if !inside { self.pinnedOpen = false }
+            if !inside {
+                self.pinnedOpen = false
+                if self.model.searchFocused { self.collapse(); return }
+            }
             self.update()
         }
         hoverWork = work
-        // Open quickly, close lazily so brushing past the edge doesn't snap it shut.
-        DispatchQueue.main.asyncAfter(deadline: .now() + (inside ? 0.05 : 0.25), execute: work)
+        // Open quickly; close after a short beat so brushing past the edge doesn't snap it shut.
+        DispatchQueue.main.asyncAfter(deadline: .now() + (inside ? 0.05 : 0.1), execute: work)
     }
 }
