@@ -110,97 +110,134 @@ const thump = (s, g = 0.5, f0 = 90) => { let ph = 0; add(s, 0.4, (t) => { ph += 
 const bloop = (s, f0, f1, g = 0.2) => { let ph = 0; add(s, 0.2, (t) => { ph += TAU * (f0 + (f1 - f0) * Math.min(1, t / 0.07)) / SR; return Math.sin(ph) * env(t, 0.004, 0.05); }, { gain: g, send: 0.25 }); };
 
 // ---------- music ----------
+// [start, length, voicing]; F major, two-bar phrases, a breakdown under the lyrics, a hush under "Barely there".
 const chords = [
-  [0, 2, [53, 57, 60, 64, 67]],          // Fmaj9
-  [2, 2, [57, 60, 64, 67]],              // Am7
-  [4, 2, [50, 53, 57, 60, 64]],          // Dm9
-  [6, 2, [46, 53, 57, 62, 60]],          // B♭maj9
-  [8, 2, [45, 57, 60, 64, 65]],          // F/A
-  [10, 1, [43, 53, 58, 62, 65]],         // Gm9
-  [11, 1.5, [48, 55, 58, 62, 65]],       // C11
-  [12.5, 2.5, [41, 53, 57, 60, 64, 67, 72]], // Fmaj9, the logo chord
+  [0, 2, [53, 57, 60, 64, 67]],          // Fmaj9      hook 1
+  [2, 2, [50, 57, 60, 62, 65]],          // Dm9        hook 2
+  [4, 2, [46, 53, 57, 60, 62]],          // B♭maj9     Meet Brimtune
+  [6, 2, [53, 57, 60, 64, 67]],          // Fmaj9      the Mac
+  [8, 2, [57, 60, 64, 67]],              // Am7
+  [10, 2, [50, 53, 57, 60, 64]],         // Dm9        YouTube Music
+  [12, 2, [46, 53, 57, 62, 60]],         // B♭maj9     search
+  [14, 2, [48, 55, 58, 62, 65]],         // C11
+  [16, 2, [43, 53, 58, 62, 65]],         // Gm9        full screen (breakdown)
+  [18, 2, [48, 55, 58, 64, 67]],         // C9
+  [20, 2, [45, 57, 60, 64, 65]],         // F/A        lock screen
+  [22, 2, [50, 53, 57, 60, 64]],         // Dm9        alerts
+  [24, 2, [46, 53, 57, 62, 64]],         // B♭maj9#11  displays
+  [26, 2, [53, 57, 64, 67]],             // Fmaj7 (thin) barely there
+  [28, 1, [48, 55, 60, 65]],             // Csus
+  [29, 2, [45, 52, 55, 60, 64]],         // Am7        bento
+  [31, 0.5, [48, 55, 58, 64]],           // C7
+  [31.5, 2, [46, 53, 57, 62, 60]],       // B♭maj9     Free.
+  [33.5, 0.5, [48, 55, 58, 62, 65]],     // C11
+  [34, 4, [41, 53, 57, 60, 64, 67, 72]], // Fmaj9      the logo
 ];
-for (const [s, len, notes] of chords) padChord(s, len, notes, { gain: s >= 12.5 ? 0.045 : 0.034, bright: s >= 12.5 ? 0.5 : s >= 2 ? 0.36 : 0.22 });
-const roots = [[2, 2, 33], [4, 2, 38], [6, 2, 34], [8, 2, 33], [10, 1, 31], [11, 0.5, 36]];
-for (const [s, len, m] of roots) for (let b = 0; b < len; b += 0.5) bass(s + b, 0.46, m + (b % 1 === 0.5 && len > 1 ? 12 : 0), 0.2);
-
-// Arpeggio on eighths: starts with the island's wings, steps aside for the sung lyrics.
-for (let t = cue.compact; t < cue.free - 0.01; t += 0.25) {
-  if (t >= cue.full - 0.01 && t < cue.lock) continue;
+for (const [s, len, notes] of chords) {
+  const big = s >= 34, hush = s >= 26 && s < 29;
+  padChord(s, len, notes, { gain: big ? 0.045 : hush ? 0.026 : 0.034, bright: big ? 0.5 : s < 4 || hush ? 0.22 : 0.36 });
+}
+// Bass follows the roots where the groove plays.
+const groove = (t) => (t >= 6 && t < 16) || (t >= 20 && t < 26) || (t >= 29 && t < 34);
+for (const [s, len, notes] of chords) for (let b = 0; b < len - 0.01; b += 0.5) {
+  const t = s + b;
+  if (groove(t) || (t >= 4 && t < 6)) bass(t, 0.46, notes[0] - 12 + (b % 1 === 0.5 ? 12 : 0), t < 6 ? 0.12 : 0.2);
+  else if (t >= 16 && t < 20 && b % 1 === 0) bass(t, 0.9, notes[0] - 12, 0.14);
+}
+// Hook: one felt-key note per word.
+[[cue.hook1, [72, 69, 65, 67, 69]], [cue.hook2, [69, 72, 74, 76, 77, 76]]].forEach(([times, notes]) =>
+  times.forEach((t, i) => keys(t, notes[i], { gain: 0.12, dec: 0.7, index: 1.2, pan: (i - 2.5) * 0.08 })));
+// Arpeggio on eighths, off during the hook, the lyric breakdown and the hush.
+for (let t = 4; t < 34 - 0.01; t += 0.25) {
+  if ((t >= 16 && t < 20) || (t >= 26 && t < 29)) continue;
   const ch = chords.filter(([s]) => s <= t + 1e-6).pop()[2];
-  const step = Math.round((t - cue.compact) / 0.25);
-  const seq = [0, 2, 1, 3, 2, 4 % ch.length, 3, 1];
+  const step = Math.round(t / 0.25);
+  const seq = [0, 2, 1, 3, 2, 4, 3, 1];
   const m = ch[seq[step % seq.length] % ch.length] + 12;
-  keys(t, m, { gain: (step % 4 === 0 ? 0.11 : 0.075) * (t < cue.open ? 0.8 : 1), pan: step % 2 ? 0.3 : -0.3, dec: 0.4 });
+  keys(t, m, { gain: (step % 4 === 0 ? 0.1 : 0.068) * (t < 6 ? 0.7 : 1), pan: step % 2 ? 0.3 : -0.3, dec: 0.4 });
 }
-// The lyrics are "sung" by a bell lead, one note per lit word.
-const melody = { 1: [74, 77, 81, 79, 77, 74], 2: [72, 74, 77, 79, 77, 72] };
-for (const [li, notes] of Object.entries(melody)) {
-  const line = lyrics[li];
-  notes.forEach((m, k) => {
-    const t = line.start + k * wordStep;
-    if (t >= cue.full - 0.01 && t < cue.lock + 0.1) { bell(t, m, { gain: 0.085, pan: (k - 2.5) * 0.08, dec: 0.5 }); keys(t, m - 12, { gain: 0.06, dec: 0.3 }); }
-  });
+// The lyrics are "sung" by a bell lead, one note per lit word (full screen and lock screen).
+const melody = [null, [74, 77, 81, 79, 77, 74], [72, 74, 77, 79, 77, 72], [70, 74, 77, 81, 79, 77], [72, 76, 79, 77, 76, 72]];
+melody.forEach((notes, li) => notes && notes.forEach((m, k) => {
+  const t = lyrics[li].start + k * wordStep;
+  if (t >= cue.full - 0.01 && t < cue.unlock) { bell(t, m, { gain: t < 20 ? 0.085 : 0.05, pan: (k - 2.5) * 0.08, dec: 0.5 }); keys(t, m - 12, { gain: 0.05, dec: 0.3 }); }
+}));
+// Drums.
+for (let t = 4; t < 34 - 0.01; t += 0.5) {
+  const beat = Math.round(t / 0.5), on = beat % 2 === 0;
+  if (groove(t)) {
+    if (on) kick(t, 0.8); else clap(t, 0.27);
+    if (beat % 8 === 7) kick(t + 0.25, 0.5);
+    hat(t + 0.25, 0.07, 0.25);
+    if ((t >= 20 && t < 26) || t >= 29) { hat(t + 0.125, 0.035, -0.3); hat(t + 0.375, 0.035, -0.3); }
+  } else if (t >= 16 && t < 20) { if (beat % 4 === 0) kick(t, 0.5); hat(t + 0.25, 0.04, 0.2); }
+  else if (t >= 4 && t < 6 && on) kick(t, 0.45);
 }
-// Drums from the first open to "Free".
-for (let t = cue.open; t < cue.free - 0.01; t += 0.5) {
-  const beat = Math.round((t - cue.open) / 0.5);
-  const lyric = t >= cue.full && t < cue.lock;
-  if (beat % 2 === 0) kick(t, lyric ? 0.6 : 0.8);
-  else clap(t, lyric ? 0.18 : 0.28);
-  if (beat % 8 === 7 && !lyric) kick(t + 0.25, 0.5);
-  hat(t + 0.25, 0.07, 0.25);
-  if (t >= 8) { hat(t + 0.125, 0.035, -0.3); hat(t + 0.375, 0.035, -0.3); }
+// Under "Barely there": a quiet clock ticking sixteenths.
+for (let t = cue.stats + 0.25; t < cue.bento - 0.2; t += 0.125) tick(t, Math.round(t * 8) % 4 === 0 ? 0.05 : 0.025, 4200, 0.2);
+// Hits: "Meet", "Free.", the logo.
+function hit(t, g = 1) {
+  kick(t, g);
+  let ph = 0; add(t, 2.4, (x) => { ph += TAU * (30 + 30 * Math.exp(-x * 4)) / SR; return Math.sin(ph) * Math.exp(-x * 1.6); }, { gain: 0.4 * g, send: 0.05 });
+  noise(t, 2, { center: (x) => 7000 - 3000 * Math.min(1, x), q: 0.5, amp: (x) => Math.exp(-x * 2.4), gain: 0.05 * g, send: 0.5 });
 }
-// The logo hit.
-kick(cue.logo, 1.0);
-{ let ph = 0; add(cue.logo, 2.4, (t) => { ph += TAU * (30 + 30 * Math.exp(-t * 4)) / SR; return Math.sin(ph) * Math.exp(-t * 1.5); }, { gain: 0.45, send: 0.05 }); }
-[65, 69, 72, 76, 79, 84].forEach((m, i) => bell(cue.logo + i * 0.012, m, { gain: 0.07, pan: (i - 2.5) * 0.15, dec: 1.6, send: 0.6 }));
-keys(cue.logo, 53, { gain: 0.14, dec: 1.4 }); keys(cue.logo, 60, { gain: 0.1, dec: 1.4 });
-noise(cue.logo, 2.5, { center: (t) => 7000 - 3000 * Math.min(1, t), q: 0.5, amp: (t) => Math.exp(-t * 2.2), gain: 0.06, send: 0.5 });
+hit(cue.meet, 0.8); [77, 81, 84, 88].forEach((m, i) => bell(cue.meet + i * 0.015, m, { gain: 0.05, pan: (i - 1.5) * 0.2, dec: 1.1, send: 0.6 }));
+hit(cue.free, 0.9); clap(cue.free, 0.3); [70, 74, 77, 81].forEach((m, i) => bell(cue.free + i * 0.012, m, { gain: 0.05, pan: (i - 1.5) * 0.2, dec: 0.9 }));
+hit(cue.end, 1.0);
+[65, 69, 72, 76, 79, 84].forEach((m, i) => bell(cue.end + i * 0.012, m, { gain: 0.07, pan: (i - 2.5) * 0.15, dec: 1.8, send: 0.6 }));
+keys(cue.end, 53, { gain: 0.14, dec: 1.6 }); keys(cue.end, 60, { gain: 0.1, dec: 1.6 });
 [84, 88, 91, 96].forEach((m, i) => bell(cue.wordmark + i * 0.06, m, { gain: 0.035, pan: -0.4 + i * 0.27, dec: 0.6 }));
 
 // ---------- sound design ----------
-// 0–1: the notch wakes: air rising into the first pluck.
-noise(0, 1.05, { center: (t) => 250 + 2600 * t * t, q: 0.8, amp: (t) => Math.min(1, t / 0.5) * (t < 0.95 ? 1 : (1.05 - t) / 0.1), gain: 0.09, send: 0.4 });
-add(0, 1.1, (t) => Math.sin(TAU * (hz(65) * (1 + 0.5 * t)) * t) * Math.min(1, t / 0.7) * Math.max(0, 1 - Math.max(0, t - 0.95) / 0.15), { gain: 0.025, send: 0.5 });
-bloop(cue.compact, 520, 800, 0.16); keys(cue.compact, 77, { gain: 0.12 });
-// 2.0: the island opens: a glassy swell.
-noise(cue.open - 0.18, 0.5, { center: (t) => 1500 + 9000 * Math.min(1, t / 0.2), q: 1.5, amp: (t) => (t < 0.18 ? t / 0.18 : Math.exp(-(t - 0.18) * 9)), gain: 0.12, send: 0.4 });
-[84, 88, 91].forEach((m, i) => bell(cue.open + i * 0.03, m, { gain: 0.045, pan: -0.3 + i * 0.3, dec: 0.5 }));
-thump(cue.open, 0.25);
-// 3.0: click ⏭, then the shimmer travels left → right with the band of light.
-tick(cue.next, 0.22, 2800, 0.15);
-sweepPan(cue.next, 0.95, -0.7, 0.7, { center: (t) => 2500 + 7000 * t, q: 2.5, amp: (t) => Math.sin(Math.PI * Math.min(1, t / 0.95)), gain: 0.1, send: 0.5 });
-[89, 93, 96, 100, 101].forEach((m, i) => bell(cue.next + 0.08 + i * 0.07, m, { gain: 0.03, pan: -0.6 + i * 0.3, dec: 0.35 }));
-// 4.0: search field, typing, results, Return.
+const swell = (s, len, f0, f1, g, send = 0.4) => noise(s, len, { center: (t) => f0 + (f1 - f0) * (t / len) ** 2, q: 0.8, amp: (t) => (t / len) ** 1.6, gain: g, send });
+const whoosh = (s, len, from, to, g = 0.14, f = 6000) => sweepPan(s, len, from, to, { center: (t) => 700 + f * Math.sin(Math.PI * Math.min(1, t / len)), q: 1.1, amp: (t) => Math.sin(Math.PI * Math.min(1, t / len)) ** 1.5, gain: g, send: 0.3 });
+// Hook: the notch wakes, then drops into the icon.
+bloop(cue.wake, 520, 800, 0.14); [84, 88].forEach((m, i) => bell(cue.wake + 0.04 + i * 0.05, m, { gain: 0.035, dec: 0.5 }));
+swell(3.45, 0.55, 300, 6000, 0.12);
+// Dive into the icon's notch and pull back out of the Mac's.
+swell(cue.dive - 0.05, 0.45, 400, 9000, 0.18);
+{ let ph = 0; add(cue.dive - 0.05, 0.45, (t) => { ph += TAU * (220 + 900 * (t / 0.45) ** 2) / SR; return Math.sin(ph) * (t / 0.45) ** 2; }, { gain: 0.035, send: 0.4 }); }
+thump(cue.mac, 0.4, 70); whoosh(cue.mac, 0.7, 0.3, -0.3, 0.12);
+bloop(cue.compact, 520, 800, 0.12);
+// Hover → open.
+noise(cue.open - 0.18, 0.5, { center: (t) => 1500 + 9000 * Math.min(1, t / 0.2), q: 1.5, amp: (t) => (t < 0.18 ? t / 0.18 : Math.exp(-(t - 0.18) * 9)), gain: 0.11, send: 0.4 });
+[84, 88, 91].forEach((m, i) => bell(cue.open + i * 0.03, m, { gain: 0.04, pan: -0.3 + i * 0.3, dec: 0.5 }));
+// Volume drag: soft detents rising in pitch.
+for (let i = 0; i <= 8; i++) tick(cue.volume[0] + (i / 8) * (cue.volume[1] - cue.volume[0]), 0.05, 1500 + i * 140, 0.2);
+// YouTube Music: click, the spark flies to the notch, the island names the song with a shimmer.
+tick(cue.play, 0.22, 2600, -0.2);
+sweepPan(cue.play + 0.05, 0.3, -0.4, 0.1, { center: (t) => 2000 + 8000 * t / 0.3, q: 3, amp: (t) => Math.sin(Math.PI * t / 0.3), gain: 0.08, send: 0.5 });
+bloop(cue.peek, 400, 760, 0.12);
+sweepPan(cue.peek, 0.95, -0.7, 0.7, { center: (t) => 2500 + 7000 * t, q: 2.5, amp: (t) => Math.sin(Math.PI * Math.min(1, t / 0.95)), gain: 0.09, send: 0.5 });
+[89, 93, 96, 100, 101].forEach((m, i) => bell(cue.peek + 0.08 + i * 0.07, m, { gain: 0.028, pan: -0.6 + i * 0.3, dec: 0.35 }));
+// Search, typing, Return, shelf, expand.
 tick(cue.search, 0.2, 2600, 0.1);
 cue.keys.forEach((k, i) => noise(k, 0.04, { center: () => 3200 + i * 300, q: 1.5, amp: (t) => Math.exp(-t * 120), gain: 0.22, pan: 0.1, send: 0.1 }));
-bloop(cue.results, 700, 900, 0.07);
-tick(cue.enter, 0.24, 1800, 0.1); bloop(cue.enter + 0.03, 400, 760, 0.12);
+bloop(cue.results, 700, 900, 0.06);
+tick(cue.enter, 0.24, 1800, 0.1); bloop(cue.enter + 0.03, 400, 760, 0.11);
 sweepPan(cue.enter + 0.03, 0.8, -0.6, 0.6, { center: (t) => 3000 + 6000 * t, q: 2.5, amp: (t) => Math.sin(Math.PI * Math.min(1, t / 0.8)), gain: 0.07, send: 0.5 });
 cue.shelf.forEach((s, i) => tick(s - 0.04, 0.07, 1900 + i * 250, -0.2 + i * 0.2));
-// 5.75: expand → full screen blooms.
-tick(cue.expand, 0.22, 2400, 0.2);
-noise(cue.expand, 0.3, { center: (t) => 400 + 6000 * (t / 0.3) ** 2, q: 0.9, amp: (t) => (t / 0.3) ** 1.5, gain: 0.16, send: 0.4 });
-thump(cue.full, 0.35, 70);
-// 7.85: the Mac locks.
+tick(cue.expand, 0.22, 2400, 0.2); swell(cue.expand, 0.5, 400, 6000, 0.15); thump(cue.full, 0.3, 70);
+// Tabs in full screen.
+[cue.tabQueue, cue.tabLists].forEach((t, i) => { tick(t, 0.16, 2300 + i * 300, 0.3); whoosh(t + 0.02, 0.3, -0.2, 0.3, 0.04); });
+// Lock, whip, alerts.
 noise(cue.lock - 0.1, 0.4, { center: (t) => 4000 - 3500 * Math.min(1, t / 0.3), q: 1, amp: (t) => Math.sin(Math.PI * Math.min(1, t / 0.4)), gain: 0.1, send: 0.4 });
 marimba(cue.lock + 0.05, 76, { gain: 0.08 }); marimba(cue.lock + 0.14, 69, { gain: 0.08 });
-// 9.75: whip up to the notch.
-sweepPan(cue.unlock - 0.05, 0.4, 0.5, -0.4, { center: (t) => 700 + 6000 * Math.sin(Math.PI * Math.min(1, t / 0.4)), q: 1.1, amp: (t) => Math.sin(Math.PI * Math.min(1, t / 0.4)) ** 1.5, gain: 0.22, send: 0.25 });
-// 10–11: the little moments, one chime each.
+whoosh(cue.unlock - 0.05, 0.4, 0.5, -0.4, 0.2);
 marimba(cue.timer, 81, { gain: 0.15 }); marimba(cue.timer + 0.09, 81, { gain: 0.11 });
 marimba(cue.meeting, 84, { gain: 0.14, pan: -0.15 }); marimba(cue.meeting + 0.1, 88, { gain: 0.13, pan: 0.15 });
 [77, 81, 84].forEach((m, i) => bell(cue.airpods + i * 0.06, m, { gain: 0.07, pan: -0.2 + i * 0.2, dec: 0.5 }));
-// 11.5: pull back to "Free.", the word lands, the button is pressed.
-sweepPan(cue.free - 0.05, 0.45, -0.3, 0.3, { center: (t) => 6000 - 5000 * Math.min(1, t / 0.4), q: 1, amp: (t) => Math.sin(Math.PI * Math.min(1, t / 0.45)), gain: 0.14, send: 0.4 });
-thump(cue.free + 0.15, 0.3, 60);
-tick(cue.download, 0.24, 2200, 0.1);
-marimba(cue.download + 0.06, 84, { gain: 0.1 }); marimba(cue.download + 0.14, 89, { gain: 0.1 });
-// 12.2–12.5: rise into the cut.
-noise(cue.push - 0.1, 0.4, { center: (t) => 500 + 9000 * (t / 0.4) ** 2, q: 0.8, amp: (t) => (t / 0.4) ** 2, gain: 0.2, send: 0.3 });
-{ let ph = 0; add(cue.push - 0.1, 0.4, (t) => { ph += TAU * (220 + 900 * (t / 0.4) ** 2) / SR; return Math.sin(ph) * (t / 0.4) ** 2; }, { gain: 0.04, send: 0.4 }); }
+// Displays: pull back, the display glides in, the pill pops.
+whoosh(23.5, 0.8, -0.5, 0.6, 0.14, 4000); thump(cue.displays + 0.6, 0.2, 55); bloop(cue.pill, 450, 820, 0.12);
+// Into the pill → stats; counters count; bento tiles land; download.
+swell(25.7, 0.32, 500, 9000, 0.16);
+for (let i = 0; i < 10; i++) tick(cue.stats + 0.45 + i * 0.09, 0.05, 1200 + i * 160, (i % 2 ? 0.3 : -0.3));
+swell(28.4, 0.6, 300, 7000, 0.12);
+for (let i = 0; i < 6; i++) tick(cue.bento + 0.15 + i * 0.125 + 0.1, 0.09, 1700 + i * 120, -0.5 + i * 0.2);
+whoosh(cue.free - 0.3, 0.35, -0.3, 0.3, 0.14);
+bloop(cue.openSource, 500, 700, 0.08);
+tick(cue.download, 0.24, 2200, 0.1); marimba(cue.download + 0.06, 84, { gain: 0.1 }); marimba(cue.download + 0.14, 89, { gain: 0.1 });
+swell(cue.end - 0.4, 0.42, 400, 9000, 0.15);
 
 // ---------- mix ----------
 // Kick ducks the pad and bass.
@@ -233,7 +270,7 @@ let peak = 0;
 const mixL = new Float32Array(N), mixR = new Float32Array(N);
 for (let i = 0; i < N; i++) {
   const t = i / SR;
-  const fade = t < 0.02 ? t / 0.02 : t > DURATION - 1.2 ? Math.pow(Math.max(0, (DURATION - t) / 1.2), 1.6) : 1;
+  const fade = t < 0.02 ? t / 0.02 : t > DURATION - 1.6 ? Math.pow(Math.max(0, (DURATION - t) / 1.6), 1.6) : 1;
   mixL[i] = Math.tanh((L[i] + wl[i] * 0.9) * 1.15) * fade;
   mixR[i] = Math.tanh((R[i] + wr[i] * 0.9) * 1.15) * fade;
   peak = Math.max(peak, Math.abs(mixL[i]), Math.abs(mixR[i]));

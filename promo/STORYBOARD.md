@@ -1,52 +1,39 @@
-# Brimtune — 15-second promo: storyboard
+# Brimtune — promo v2 (38 s): storyboard
 
-**Format:** 1920×1080, 60 fps, H.264 yuv420p, AAC. 900 frames (0…899 / 60).
-**Thread:** *the notch wakes up.* A black notch on a MacBook comes alive with music, grows into
-everything Brimtune does, and at the end shrinks back into the notch cut into the Brimtune "B" icon.
-**Music:** 120 BPM (beat 0.5 s, bar 2 s), F major, Fmaj9 – Am7 – Dm9 – B♭maj9 – F/A – Gm7 – C – Fmaj9.
-Soft pad + plucked keys intro, kick/clap enters on the first expand (2.0 s), big chord + sub on
-the logo (12.5 s), ringing tail to 15 s. SFX are UI-sized (ticks, glassy swells), not trailer booms.
-**Look:** Apple keynote dark stage (#0E0B18 night), soft colour fields from the current cover
-(rose/iris/amber → teal → orange), Archivo heavy display with light italic accents, Geist UI.
-All songs, covers and lyrics are made up.
+**Format:** 1920×1080, 60 fps, H.264 yuv420p, AAC. 2280 frames.
+**Brief (v2):** longer as needed to fit everything; structure like a SaaS launch film (hook question →
+"Meet" → product in use → feature beats → bento recap → offer → logo). Must show: YouTube Music,
+volume, very low resource use, external displays, the full-screen player exactly as the app draws it
+(clock, cover, glass player card, Lyrics / Up Next / Playlists tabs, sidebar), free download on the
+site, open source. Fix: the skewed 3/4 MacBook at ~8 s (v1) — keep angles ≤ 12°, real lid rim.
+**Thread:** *the notch, woken up.* The hook's notch grows wings, becomes the icon; the icon's notch
+match-cuts back into a Mac; every feature happens in or from that notch; it ends on the icon again.
+**Music:** 120 BPM, F major. Hook = felt keys, one note per word; hit on "Meet"; groove from the Mac;
+breakdown under the lyrics (a bell "sings" each word); groove back; near-silence ticking under
+"Barely there"; build through the bento; hits on "Free." and on the logo; ringing tail.
 
-Options per scene — the chosen one is **bold**.
+Options per scene — chosen **bold**.
 
-| # | Time | Options | Chosen + why |
+| # | Time | Options | Chosen — why |
 |---|---|---|---|
-| 1 Wake | 0.0–2.0 | a) lid opens on a dark MacBook; b) huge type "Your notch" then reveal; c) **macro on the black notch, a rose/iris glow leaks under it, the compact island grows its wings (cover + bars) on the first pluck, camera pulls back and tilts to a 3/4 MacBook**; d) waveform line draws the notch outline | c — starts the thread on the notch itself, gives depth (macro → product) without a title card |
-| 2 Hover → player | 2.0–3.0 | a) **pointer glides in, hover, island springs open into the full player on the downbeat (drums enter)**; b) split-screen compact vs open; c) island opens by itself with a swipe of light | a — shows the real interaction (hover), causal and readable |
-| 3 Track change | 3.0–4.0 | a) **click "next" → cover morphs rose → teal, shimmer sweeps the island, the whole room's colour fields recolour**; b) covers fly past as cards; c) album stack flip | a — the colour change is Brimtune's signature; the room recolouring sells it at a glance |
-| 4 Search + playlists | 4.0–6.0 | a) **typing "paper" into the island's search (ticks on 16ths) → results; the playlist shelf slides in, "Night drive" opens its song list**; b) cards spread around the island in 3D; c) Up Next pager flicks | a — one continuous UI story inside the same island, keeps identity |
-| 5 Lyrics, full screen | 6.0–8.0 | a) camera dives into the MacBook screen; **pointer clicks ↗ expand, the island's cover blooms into the breathing full-screen player, lyrics light word by word on the 8th notes**; b) lyrics in 3D space around the Mac; c) typewriter lyrics on black | a — causal (expand button → full screen), words sung by the actual music |
-| 6 Lock screen | 8.0–10.0 | a) **screen dims to the lock screen (clock 9:41) with Brimtune's player; camera arcs the other way around the Mac**; b) close-up of the lock widget only; c) lid half-closes | a — product context + new camera direction for contrast |
-| 7 Little moments | 10.0–11.5 | a) three separate cards; b) **camera whips up to the notch; the island morphs Timer 25:00 → Meeting in 5 min → AirPods 82%, one per beat, caption words land with each**; c) phone-style notifications | b — same object morphing on the beat = rhythm + thread |
-| 8 Free | 11.5–12.5 | a) price tag; b) **pull back to a frontal Mac, huge "Free." behind it in depth, pointer presses "Download for Mac" → ✓**; c) giant $0 counter | b — Apple-style type behind product, causal button press |
-| 9 Logo | 12.5–15.0 | a) icon fades in; b) **camera pushes into the island/notch → match cut to the notch in the "B" icon, pull back reveals the icon, wordmark slides out, brimtune.pages.dev under it; big chord + sub**; c) icon assembles from the speaker circles | b — closes the thread: the notch was the logo all along |
+| 1 Hook | 0–4 | a) Mac lid opens; b) **type on night under a notch at the top edge: "Your Mac has a notch." → "What if it played *your music?*", the notch grows wings on the question**; c) silhouette montage of notches | b — the reference's question-hook, on our own object |
+| 2 Meet | 4–6 | a) logo fade; b) **the winged notch drops to centre and becomes the icon on the hit; "Meet" and "Brimtune." slide out of it; camera dives into the icon's notch**; c) letters assemble | b — causal, ends in a match-cut |
+| 3 Hover | 6–8.5 | a) **cut into the Mac's notch, pull back to a near-frontal MacBook, pointer hovers, island springs open**; b) side angle; c) split screen | a — fixes the skewed mockup, reads instantly |
+| 4 Volume | 8.5–10 | a) **drag the island's volume slider (track thickens, level bubble 62→88, speaker waves step up)**; b) HUD; c) keyboard keys | a — the real control |
+| 5 YouTube Music | 10–12.4 | a) logos wall; b) **pointer plays a song in a YouTube Music browser tab; a spark flies to the notch, the island peeks the title, the room recolours; chips: Spotify · Apple Music · Safari · Chrome**; c) phone | b — shows *how* (reads the tab) and the cover shimmer |
+| 6 Search, playlists | 12.4–15.5 | a) **type "kyiv" in the island's search, Return, brush the playlist shelf, click ↗**; b) cards in 3D; c) Up Next pager | a — one continuous UI story |
+| 7 Full screen | 15.5–19.8 | a) generic lyrics card; b) **the cover blooms into the app's real full-screen player (glass clock, cover, player card, tabs, sidebar); lyrics light word by word; tabs flip to Up Next and Playlists**; c) 3D lyrics | b — what the user asked for, exactly the app's layout |
+| 8 Lock screen | 19.8–21.8 | a) close-up widget; b) **near-frontal Mac locks; macOS clock + Brimtune's band (cover, card, lyrics continue)**; c) lid half-closed | b — continuity of the same song and lyrics |
+| 9 Alerts | 21.8–23.6 | a) cards; b) **whip to the notch: Timer → Meeting → AirPods, one per beat**; c) notifications | b — rhythm on one object |
+| 10 Displays | 23.6–26 | a) **pull back; an external display glides in beside the MacBook; a floating pill island appears at its top and plays**; b) multi-monitor grid; c) text only | a — shows "works without a notch" literally |
+| 11 Barely there | 26–29 | a) Activity-Monitor screenshot; b) **type card: "Barely there." + counters ≈1.5 % CPU, 36 MB (measured, music paused) with flat sparklines; ticking hush in the music**; c) feather metaphor | b — honest numbers, big type, contrast in sound |
+| 12 Bento | 29–31.5 | a) list; b) **2.5D bento grid of six live tiles (lyrics, lock screen, player, timers, displays, history) flying in on eighths, then past the camera**; c) carousel | b — the reference's recap beat, our features |
+| 13 Free + open | 31.5–34 | a) price tag; b) **"Free." on the hit, "Open source." under it with GPL-3.0 chip; "Download free at brimtune.pages.dev" pressed**; c) GitHub page | b — offer + where to get it |
+| 14 Logo | 34–38 | a) **icon springs in, wordmark rises, URL, "Free · Open source · macOS 14+"; big chord rings out**; b) icon only | a — readable final card |
 
-## Shot cards (practical)
-
-1. **0.0–2.0** Camera: macro (scale ≈3.2) on the notch, slow pull to ≈1.15 with rotateX 14°→8°,
-   rotateY −16°; background colour fields parallax slower than the Mac; foreground dust faster and
-   out of focus. Island idle → compact at 1.0 (pluck + soft "pop"). Caption 0.9–1.9 "Your notch, *awake.*"
-   (letters widen from condensed, rise through a mask).
-2. **2.0–3.0** Pointer arcs in from lower right, hovers the island at 1.85, island springs open at
-   2.0 (glassy swell + kick drop). Caption "Hover. *It plays.*"
-3. **3.0–4.0** Pointer moves to ⏭, press 3.0 (click), cover morph + shimmer 3.0–3.9 (shimmer
-   swish), colour fields lerp to teal. Caption "Colour from *every cover.*"
-4. **4.0–6.0** Click search at 4.0, "paper" typed 4.1–4.6 (key ticks), results 4.65, island slides to
-   playlist view 5.0 (soft whoosh). Pointer goes to ↗ at 5.6, press 5.75. Caption "Search. *Playlists.*"
-5. **6.0–8.0** Dive: screen fills frame by 6.0, cover blooms into mesh, lyrics lines light word by word
-   on 8ths (two lines), slow breathing scale. Shimmer bells follow the words.
-6. **8.0–10.0** Cut on the bar to the Mac at 3/4 from the left on the lock screen (9:41, Brimtune
-   player), camera arcs right. Caption "On your *lock screen.*"
-7. **10.0–11.5** Whip up (motion blur) to the notch. Timer 10.0, Meeting 10.5, AirPods 11.0 (chime
-   each, different pitch). Caption builds word by word "Timers. Meetings. *AirPods.*"
-8. **11.5–12.5** Pull back to frontal Mac, "Free." huge behind it, button press at 12.05 (click + ✓ chime).
-9. **12.5–15.0** Fast push into the notch 12.25–12.5 (riser), cut on 12.5 to the icon's notch,
-   spring pull-back to the icon, wordmark + URL slide out at 12.9 / 13.2. Hold with a gentle drift; chord rings out.
-
-## Risks + checks
-- CSS 3D rasterisation sharpness when zoomed in → probe frame at the macro and the dive.
-- Motion blur: 4 sub-frames per frame (180° shutter) averaged by FFmpeg `tmix`.
-- Sync: SFX and music generated from the same `cues.js`; verify in the decoded MP4 at each cue.
+## Checks
+- Mockup angles ≤ 12°, lid rim, lock and displays shots near-frontal.
+- Full-screen layout matches `StageView` (clock header, art = min(0.36H, 0.27W), card ≈ 290 pt,
+  tabs, lyrics column 0.36W, sidebar at 28/36 pt).
+- Numbers only as measured (CLAUDE.md: ~1.5 % CPU, 36 MB, music paused).
+- Sync: picture and score from `cues.js`; verify onsets in the decoded MP4.

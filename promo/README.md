@@ -1,6 +1,6 @@
-# Brimtune promo (15 s)
+# Brimtune promo (38 s)
 
-A 15-second presentation video of Brimtune, made entirely from code: HTML/CSS/JS for the picture,
+A 38-second presentation video of Brimtune, made entirely from code: HTML/CSS/JS for the picture,
 a small synthesiser for the music and sound design. Storyboard: [STORYBOARD.md](STORYBOARD.md).
 
 ```sh
