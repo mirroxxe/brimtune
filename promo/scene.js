@@ -2,6 +2,11 @@
 // so the renderer can seek anywhere (and back) and get the same picture. See STORYBOARD.md.
 import { cue, lyrics, wordStep, DURATION } from "./cues.js";
 
+// ?vertical renders the 1080×1920 cut for TikTok / Shorts: same story, its own camera and layouts.
+const V = new URLSearchParams(location.search).has("vertical");
+const W = V ? 1080 : 1920, H = V ? 1920 : 1080, CX = W / 2;
+if (V) document.documentElement.classList.add("v");
+
 // ---------- maths ----------
 const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
 const lerp = (a, b, k) => a + (b - a) * k;
@@ -512,7 +517,7 @@ function paintStage(key, t, tabKeys) {
 // ---------- camera ----------
 // Keys: [t, fx, fy, scale, rotateX, rotateY, rotateZ, stageX, stageY]. (fx, fy) is the point on the rig
 // (MacBook lid coordinates) that lands on (stageX, stageY).
-const PULL = { fx: 776, fy: 20, s: 6, cx: 960, cy: 384 };
+const PULL = V ? { fx: 776, fy: 20, s: 6, cx: 540, cy: 760 } : { fx: 776, fy: 20, s: 6, cx: 960, cy: 384 };
 const CAM = [
   [cue.mac, PULL.fx, PULL.fy, PULL.s, 0, 0, 0, PULL.cx, PULL.cy],
   [6.95, 776, 430, 0.8, 9, -5, 0, 960, 470],
@@ -534,10 +539,34 @@ const CAM = [
   [24.35, 2050, 560, 0.56, 6, -5, 0, 960, 560],
   [25.9, 2150, 540, 0.6, 5, -8, 0, 960, 560],
 ];
-const cam = [1, 2, 3, 4, 5, 6, 7, 8].map((c) => track(CAM.map((k) => [k[0], k[c]]), { log: c === 3 }));
+// Vertical: closer on the island, the full-screen player shown whole and then tracked across, the display on its own.
+const CAM_V = [
+  [cue.mac, PULL.fx, PULL.fy, PULL.s, 0, 0, 0, PULL.cx, PULL.cy],
+  [6.95, 776, 480, 0.62, 9, -5, 0, 540, 820],
+  [7.45, 776, 300, 0.98, 8, -4, 0, 540, 720],
+  [8.4, 776, 232, 1.9, 5, -3, 0, 540, 640],
+  [9.6, 776, 240, 2.0, 4, 2, 0, 540, 650],
+  [10.3, 740, 470, 0.86, 6, 5, 0, 540, 820],
+  [11.6, 750, 460, 0.9, 6, 8, 0, 540, 820],
+  [12.35, 776, 232, 1.78, 5, 4, 0, 540, 640],
+  [13.6, 776, 240, 1.9, 4, -2, 0, 540, 650],
+  [15.3, 776, 250, 2.0, 3, -6, 0, 540, 660],
+  [16.0, 776, 511, 0.7, 0, 0, 0, 540, 860],
+  [16.55, 776, 520, 0.72, 0, 0, 0, 540, 860],
+  [17.15, 1000, 600, 1.6, 0, 0, 0, 540, 860],
+  [19.4, 1010, 590, 1.66, 0, 0, 0.3, 540, 860],
+  [20.55, 776, 540, 0.62, 9, -3, 0, 540, 900],
+  [21.65, 776, 540, 0.66, 8, 3, 0, 540, 900],
+  [22.05, 776, 36, 2.4, 7, -2, 0, 540, 640],
+  [23.45, 776, 36, 2.5, 6, 2, 0, 540, 640],
+  [24.35, 2380, 540, 0.5, 6, -6, 0, 540, 860],
+  [25.9, 2460, 520, 0.55, 5, -9, 0, 540, 860],
+];
+const cam = [1, 2, 3, 4, 5, 6, 7, 8].map((c) => track((V ? CAM_V : CAM).map((k) => [k[0], k[c]]), { log: c === 3 }));
 
 // ---------- scenes ----------
-const ICON_MEET = 200; // the icon's size on the "Meet" line
+const ICON_MEET = V ? 260 : 200;
+const HY = V ? 820 : 540; // the icon's centre on the "Meet" card // the icon's size on the "Meet" line
 function paintHook(t) {
   if (!show(el.hook, t < cue.mac + 0.05)) return;
   if (show(el.h1n, t < 2.0)) { rise(el.h1, t, cue.hook1); exitStyle(el.h1n, t, 1.78, 0.22); }
@@ -547,9 +576,9 @@ function paintHook(t) {
   const w = 2 * spring([[0, 186], [cue.wake, 292]], 10, 0.68)(t), h = 64;
   const drop = ease.inOut(prog(t, 3.7, 0.32));
   const k = lerp(1, (144 * ICON_MEET / 1024) / w * 2.2, drop);
-  const y = lerp(0, 540 - ICON_MEET / 2 + 262 * ICON_MEET / 1024 - h * k / 2, drop);
+  const y = lerp(0, HY - ICON_MEET / 2 + 262 * ICON_MEET / 1024 - h * k / 2, drop);
   el.hisl.style.width = `${w}px`; el.hisl.style.height = `${h}px`;
-  el.hisl.style.transform = `translate(${960 - w / 2}px, ${y}px) scale(${k})`;
+  el.hisl.style.transform = `translate(${CX - w / 2}px, ${y}px) scale(${k})`;
   el.hisl.style.opacity = 1 - prog(t, 3.96, 0.06);
   el.hisl.style.boxShadow = `0 0 ${lerp(0, 120, wake)}px ${lerp(0, 10, wake)}px color-mix(in srgb, var(--a1) ${Math.round(wake * 45)}%, transparent)`;
   $$(".hisl .cover, .hisl .bars", el.hook).forEach((n) => (n.style.opacity = wake * (1 - drop)));
@@ -561,11 +590,12 @@ function paintHook(t) {
   const dive = Math.pow(prog(t, cue.dive, cue.mac - cue.dive), 2.6);
   const notchPx = 144 * ICON_MEET / 1024;
   const kd = Math.exp(lerp(0, Math.log((PULL.s * 144) / notchPx), dive));
-  const ny = 540 - ICON_MEET / 2 + 283 * ICON_MEET / 1024;
+  const ny = HY - ICON_MEET / 2 + 283 * ICON_MEET / 1024;
   el.micon.style.transformOrigin = `50% ${(283 / 1024) * 100}%`;
   el.micon.style.transform = `translate(0, ${(PULL.cy + 21 - ny) * dive}px) scale(${lerp(0.4, 1, Math.max(0, pop)) * kd})`;
   const slide = ease.out5(prog(t, cue.meet + 0.08, 0.6));
-  el.mL.style.transform = `translateX(${(1 - slide) * 110}%)`; el.mR.style.transform = `translateX(${(slide - 1) * 110}%)`;
+  const ax = V ? "translateY" : "translateX";
+  el.mL.style.transform = `${ax}(${(1 - slide) * 110}%)`; el.mR.style.transform = `${ax}(${(slide - 1) * 110}%)`;
   el.mL.style.opacity = el.mR.style.opacity = clamp(slide * 2) * (1 - prog(t, cue.dive, 0.2));
 }
 
@@ -579,7 +609,7 @@ function paintWorld(t) {
   el.rig.style.transform = `translate(${cx}px,${cy}px) rotateZ(${rz}deg) rotateX(${rx}deg) rotateY(${ry}deg) scale(${s}) translate(${-fx}px,${-fy}px)`;
   if (t > 25.75) {
     paintMonitor(t);
-    const r = el.mpill.getBoundingClientRect(), sr = stage.getBoundingClientRect(), k = sr.width / 1920;
+    const r = el.mpill.getBoundingClientRect(), sr = stage.getBoundingClientRect(), k = sr.width / W;
     const px = (r.left + r.width / 2 - sr.left) / k, py = (r.top + r.height / 2 - sr.top) / k;
     const z = Math.exp(Math.log(9) * Math.pow(prog(t, 25.75, 0.25), 2.2));
     el.world.style.transform = `translate(${px}px,${py}px) scale(${z}) translate(${-px}px,${-py}px)`;
@@ -593,8 +623,8 @@ function paintWorld(t) {
   const fsOn = t > 15.7 && t < 20.1;
   el.fg.forEach((d, i) => {
     const depth = 1.6 + (i % 3) * 0.7, size = 40 + ((i * 53) % 120);
-    const x = ((i * 241 + 130) % 1920) + ry * depth * 22 + t * (8 + i * 3);
-    const y = ((i * 397 + 90) % 1080) - rx * depth * 9 + Math.sin(t * 0.6 + i) * 20;
+    const x = ((i * 241 + 130) % W) + ry * depth * 22 + t * (8 + i * 3);
+    const y = ((i * 397 + 90) % H) - rx * depth * 9 + Math.sin(t * 0.6 + i) * 20;
     d.style.cssText = `left:${x}px;top:${y}px;width:${size}px;height:${size}px;opacity:${fsOn ? 0 : 0.12 + (i % 4) * 0.05};filter:blur(${4 + depth * 3}px)`;
   });
   const deskBlur = clamp((s - 1.12) / 0.5) * 7;
@@ -742,7 +772,7 @@ function paintOffer(t) {
   const f = ease.inOut(prog(t, cue.download + 0.02, 0.3));
   el.dlFill.style.transform = `translateX(${(f - 1) * 100}%)`;
   el.dl1.style.opacity = 1 - clamp(f * 2); el.dl2.style.opacity = clamp(f * 2 - 0.6);
-  const pk = [[33.0, 1500, 1200], [33.36, 1100, 930], [cue.download + 0.12, 1104, 934], [cue.end, 1120, 950]];
+  const pk = V ? [[33.0, 900, 2000], [33.36, 680, 1352], [cue.download + 0.12, 684, 1356], [cue.end, 700, 1372]] : [[33.0, 1500, 1200], [33.36, 1100, 930], [cue.download + 0.12, 1104, 934], [cue.end, 1120, 950]];
   const px = track(pk.map((p) => [p[0], p[1]]))(t), py = track(pk.map((p) => [p[0], p[2]]))(t);
   el.pointer.style.transform = `translate(${px}px,${py}px) scale(${1.55 - 0.22 * bump(t, cue.download - 0.02)})`;
   el.pointer.style.opacity = clamp(prog(t, 33.0, 0.15));
@@ -752,9 +782,9 @@ function paintEnd(t) {
   if (!show(el.end, t > cue.end - 0.05)) return;
   el.end.style.opacity = prog(t, cue.end - 0.04, 0.08);
   const pop = springStep(-1, 0, Math.max(0, t - cue.end), 9, 0.62)[0] + 1;
-  const k = (300 / 824) * lerp(0.55, 1, pop);
-  const ay = 380 - 7 * ease.inOut(prog(t, 35.5, 2.5));
-  el.icon.style.transform = `translate(960px,${ay}px) rotate(${(1 - ease.out5(prog(t, cue.end, 0.9))) * -6}deg) scale(${k}) translate(-512px,-512px)`;
+  const k = ((V ? 380 : 300) / 824) * lerp(0.55, 1, pop);
+  const ay = (V ? 760 : 380) - 7 * ease.inOut(prog(t, 35.5, 2.5));
+  el.icon.style.transform = `translate(${CX}px,${ay}px) rotate(${(1 - ease.out5(prog(t, cue.end, 0.9))) * -6}deg) scale(${k}) translate(-512px,-512px)`;
   const g = ease.out(prog(t, cue.end + 0.05, 0.9));
   el.glow.style.opacity = g;
   el.glow.style.transform = `scale(${lerp(0.4, 1, g) * (1 + 0.05 * Math.sin((t - cue.end) * 2.4))}) rotate(${(t - cue.end) * 6}deg)`;
@@ -789,11 +819,13 @@ async function boot() {
   await Promise.all(['800 92px "Archivo"', 'italic 300 92px "Archivo"', '600 15px "Geist"', '500 15px "Geist"'].map((f) => document.fonts.load(f)));
   await document.fonts.ready;
   measure();
+  el.world.style.perspectiveOrigin = `${CX}px ${H / 2}px`;
+  Object.assign(el.micon.style, { left: `${CX - ICON_MEET / 2}px`, top: `${HY - ICON_MEET / 2}px`, width: `${ICON_MEET}px`, height: `${ICON_MEET}px` });
   window.renderAt = renderAt;
   const q = new URLSearchParams(location.search);
   const fit = () => {
-    const k = Math.min(innerWidth / 1920, innerHeight / 1080);
-    stage.style.transform = k === 1 ? "" : `translate(${(innerWidth - 1920 * k) / 2}px,${(innerHeight - 1080 * k) / 2}px) scale(${k})`;
+    const k = Math.min(innerWidth / W, innerHeight / H);
+    stage.style.transform = k === 1 ? "" : `translate(${(innerWidth - W * k) / 2}px,${(innerHeight - H * k) / 2}px) scale(${k})`;
   };
   fit(); addEventListener("resize", fit);
   renderAt(q.has("t") ? parseFloat(q.get("t")) : 0);

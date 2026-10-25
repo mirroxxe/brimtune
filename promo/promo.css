@@ -367,3 +367,38 @@ svg.ln { fill: none !important; stroke: currentColor; stroke-width: 2; stroke-li
 #badges { position: absolute; left: 0; right: 0; top: 830px; display: flex; justify-content: center; gap: 14px; }
 #badges span { padding: 12px 24px; border-radius: 999px; font: 600 24px/1 var(--text); color: var(--moon); background: rgba(255,255,255,.08); box-shadow: inset 0 0 0 1px rgba(255,255,255,.16); }
 #fadein { position: absolute; inset: 0; background: #000; }
+
+/* ---------- Vertical cut (1080×1920, ?vertical) ---------- */
+.v #stage { width: 1080px; height: 1920px; }
+.v #floor { height: 900px; }
+.v #bg .b1 { left: -200px; top: 1100px; } .v #bg .b2 { left: 400px; top: 700px; } .v #bg .b3 { left: 100px; top: -200px; }
+/* Captions sit above the bottom band the apps cover with their own buttons and text. */
+.v #cap { left: 72px; right: 72px; bottom: 560px; font-size: 92px; line-height: 1.02; white-space: normal; }
+.v .capline { width: 936px; }
+.v .capline .word { margin-right: .16em; }
+.v #chips { left: 72px; right: 120px; bottom: 830px; flex-wrap: wrap; }
+.v #shade { background: linear-gradient(0deg, rgba(10,7,20,.75), transparent 55%), radial-gradient(130% 100% at 50% 40%, transparent 55%, rgba(0,0,0,.5)); }
+.v .hl { top: 700px; left: 70px; right: 70px; white-space: normal; font-size: 132px; line-height: 1.02; }
+.v .meet .mw { font-size: 150px; transform: translateX(-50%); left: 50%; right: auto; top: auto; }
+.v .meet .m-l { top: 440px; } .v .meet .m-r { top: 1010px; }
+.v #stats .sh { top: 300px; font-size: 140px; }
+.v #stats .cols { top: 560px; flex-direction: column; gap: 70px; }
+.v #stats .col { width: 820px; }
+.v #stats .spark { width: 820px; }
+.v #stats .fine { bottom: 420px; padding: 0 90px; font-size: 30px; }
+.v #bento { perspective-origin: 540px 800px; }
+.v #bento .bh { top: 200px; padding: 0 60px; font-size: 104px; line-height: 1.05; }
+.v .grid3d { top: 1110px; }
+.v .tiles { grid-template-columns: repeat(2, 466px); grid-auto-rows: 270px; gap: 24px; }
+.v .mini-isl { width: 400px; }
+.v .mini-lock .mlc { width: 400px; }
+.v .mini-mon { left: 20px; width: 210px; } .v .mini-mon.m2 { left: 250px; width: 180px; }
+.v #offer .ofree { top: 430px; font-size: 320px; }
+.v #offer .oopen { top: 790px; font-size: 136px; }
+.v #offer .ochip { top: 1000px; font-size: 26px; }
+.v #dl { top: 1240px; width: 920px; height: 112px; }
+.v #dl .lab { font-size: 31px; }
+.v #end .glow { left: 540px; top: 760px; transform-origin: 0 0; }
+.v #word { top: 1050px; font-size: 150px; }
+.v #url { top: 1240px; font-size: 42px; }
+.v #badges { top: 1340px; }

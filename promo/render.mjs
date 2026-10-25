@@ -3,6 +3,7 @@
 //   node render.mjs                 full render (needs out/audio.wav: node audio.mjs)
 //   node render.mjs --stills 1 2.4  PNG stills of those moments into out/stills/
 //   node render.mjs --from 5 --to 7 render only part (out/part.mp4), for checking a stretch
+//   add --vertical for the 1080×1920 cut (out/brimtune-promo-vertical.mp4)
 import http from "node:http";
 import fs from "node:fs";
 import path from "node:path";
@@ -19,6 +20,8 @@ const args = process.argv.slice(2);
 const opt = (name, def) => { const i = args.indexOf(name); return i < 0 ? def : args[i + 1]; };
 const SUB = Number(opt("--sub", 4));
 const WORKERS = Number(opt("--workers", 5));
+const VERT = args.includes("--vertical");
+const [VW, VH] = VERT ? [1080, 1920] : [1920, 1080];
 const CHROME = process.env.CHROME || "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
 
 const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".wav": "audio/wav", ".png": "image/png" };
@@ -29,12 +32,12 @@ const server = http.createServer((req, res) => {
   fs.createReadStream(file).pipe(res);
 });
 await new Promise((r) => server.listen(0, r));
-const url = `http://127.0.0.1:${server.address().port}/index.html`;
+const url = `http://127.0.0.1:${server.address().port}/index.html${VERT ? "?vertical" : ""}`;
 
 const browser = await puppeteer.launch({
   executablePath: CHROME, headless: true,
   args: ["--hide-scrollbars", "--force-color-profile=srgb", "--disable-lcd-text", "--font-render-hinting=none"],
-  defaultViewport: { width: 1920, height: 1080, deviceScaleFactor: 1 },
+  defaultViewport: { width: VW, height: VH, deviceScaleFactor: 1 },
 });
 async function openPage() {
   const page = await browser.newPage();
@@ -61,11 +64,12 @@ function encoder(file, fps, extra = []) {
 
 if (args.includes("--stills")) {
   const times = args.slice(args.indexOf("--stills") + 1).filter((a) => !a.startsWith("--")).map(Number);
-  fs.mkdirSync(path.join(out, "stills"), { recursive: true });
+  const stillDir = path.join(out, VERT ? "stills-v" : "stills");
+  fs.mkdirSync(stillDir, { recursive: true });
   const page = await openPage();
   for (const t of times) {
     const buf = await shot(page, t);
-    fs.writeFileSync(path.join(out, "stills", `t${t.toFixed(2)}.png`), buf);
+    fs.writeFileSync(path.join(stillDir, `t${t.toFixed(2)}.png`), buf);
   }
   console.log(`stills → out/stills (${times.length})`);
 } else {
@@ -79,7 +83,7 @@ if (args.includes("--stills")) {
   await Promise.all(Array.from({ length: WORKERS }, async (_, w) => {
     const a = from + w * chunk, b = Math.min(to, a + chunk);
     if (a >= b) return;
-    const seg = path.join(out, `seg${w}.mkv`);
+    const seg = path.join(out, `seg${VERT ? "v" : ""}${w}.mkv`);
     segs[w] = seg;
     const page = await openPage();
     const enc = encoder(seg, FPS, ["-c:v", "ffv1", "-pix_fmt", "bgr0"]);
@@ -93,10 +97,10 @@ if (args.includes("--stills")) {
     await enc.end();
     await page.close();
   }));
-  const list = path.join(out, "segs.txt");
+  const list = path.join(out, VERT ? "segs-v.txt" : "segs.txt");
   fs.writeFileSync(list, segs.filter(Boolean).map((s) => `file '${s}'`).join("\n"));
   const full = from === 0 && to === Math.round(DURATION * FPS);
-  const target = path.join(out, full ? "brimtune-promo.mp4" : "part.mp4");
+  const target = path.join(out, (full ? "brimtune-promo" : "part") + (VERT ? "-vertical" : "") + ".mp4");
   const audio = path.join(out, "audio.wav");
   const withAudio = fs.existsSync(audio);
   const ff = spawn(ffmpegPath, ["-y", "-loglevel", "error", "-f", "concat", "-safe", "0", "-i", list,
