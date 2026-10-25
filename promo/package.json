@@ -1,0 +1,7 @@
+{
+  "name": "brimtune-promo",
+  "private": true,
+  "type": "module",
+  "scripts": { "render": "node render.mjs" },
+  "devDependencies": { "ffmpeg-static": "^5.2.0", "puppeteer-core": "^23.11.1" }
+}
