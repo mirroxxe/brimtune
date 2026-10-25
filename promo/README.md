@@ -9,6 +9,8 @@ npm install            # puppeteer-core (drives your installed Google Chrome) + 
 node audio.mjs         # → out/audio.wav (music + SFX from cues.js)
 node render.mjs        # → out/brimtune-promo.mp4 (1920×1080, 60 fps, H.264 yuv420p, AAC)
 node render.mjs --vertical  # → out/brimtune-promo-vertical.mp4 (1080×1920, for TikTok / Shorts)
+node audio.mjs --short && node render.mjs --short  # → out/brimtune-short.mp4 (11 s vertical, cuts from cues.js `short.edl`)
+node banner.mjs        # → out/youtube-banner.png/.jpg (2560×1440) from banner.html
 ```
 
 - `cues.js` — the shared timeline (seconds) that both the picture and the sound follow.

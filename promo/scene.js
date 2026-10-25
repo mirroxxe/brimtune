@@ -1,9 +1,10 @@
 // Brimtune — promo (v2, 38 s). One function, renderAt(t), sets every frame from the time alone,
 // so the renderer can seek anywhere (and back) and get the same picture. See STORYBOARD.md.
-import { cue, lyrics, wordStep, DURATION } from "./cues.js";
+import { cue, lyrics, wordStep, DURATION, short, shortToSource } from "./cues.js";
 
 // ?vertical renders the 1080×1920 cut for TikTok / Shorts: same story, its own camera and layouts.
-const V = new URLSearchParams(location.search).has("vertical");
+const SHORT = new URLSearchParams(location.search).has("short");
+const V = SHORT || new URLSearchParams(location.search).has("vertical");
 const W = V ? 1080 : 1920, H = V ? 1920 : 1080, CX = W / 2;
 if (V) document.documentElement.classList.add("v");
 
@@ -268,6 +269,7 @@ stage.innerHTML = `
     <div id="word">${"Brimtune".split("").map((c) => `<span class="word"><span>${c}</span></span>`).join("")}</div>
     <div id="url"><b>brimtune</b>.pages.dev</div>
     <div id="badges"><span>Free</span><span>Open source</span><span>macOS 14+</span></div></div>
+  <div id="shortcap">${maskWords(short.hook.text)}</div>
   <div id="fadein"></div>
 `;
 
@@ -794,7 +796,7 @@ function paintEnd(t) {
   el.badges.forEach((b, i) => { const a = ease.out(prog(t, cue.badges + i * 0.1, 0.5)); b.style.opacity = a; b.style.transform = `translateY(${(1 - a) * 16}px)`; });
 }
 
-function renderAt(t) {
+function renderFilm(t) {
   const pal = palette(t);
   stage.style.setProperty("--a1", pal[0]); stage.style.setProperty("--a2", pal[1]); stage.style.setProperty("--a3", pal[2]);
   paintHook(t);
@@ -814,6 +816,21 @@ function renderAt(t) {
   el.bars.forEach((b, i) => (b.style.transform = `scaleY(${barsAt(t, i % 5).toFixed(3)})`));
 }
 
+// The short: the film at the edit list's source time, plus its own hook line.
+const shortcap = $("#shortcap"), shortWords = $$("#shortcap .word > span");
+function renderAt(t) {
+  show(shortcap, SHORT);
+  if (!SHORT) return renderFilm(t);
+  const src = shortToSource(t);
+  renderFilm(src);
+  if (src >= cue.mac) show(el.hook, false); // the short opens on the Mac's notch, not on the icon's
+  const h = short.hook;
+  if (show(shortcap, t < h.out + 0.3)) {
+    exitStyle(shortcap, t, h.out, 0.22);
+    rise(shortWords, t, shortWords.map((_, i) => h.at + i * 0.09));
+  }
+}
+
 // ---------- boot ----------
 async function boot() {
   await Promise.all(['800 92px "Archivo"', 'italic 300 92px "Archivo"', '600 15px "Geist"', '500 15px "Geist"'].map((f) => document.fonts.load(f)));
@@ -830,11 +847,11 @@ async function boot() {
   fit(); addEventListener("resize", fit);
   renderAt(q.has("t") ? parseFloat(q.get("t")) : 0);
   if (q.has("play")) {
-    const audio = new Audio("out/audio.wav");
+    const audio = new Audio(SHORT ? "out/audio-short.wav" : "out/audio.wav");
     const start = () => { audio.currentTime = 0; audio.play().catch(() => {}); };
     addEventListener("click", start);
     start();
-    const loop = () => { renderAt(Math.min(audio.currentTime, DURATION - 1 / 60)); requestAnimationFrame(loop); };
+    const loop = () => { renderAt(Math.min(audio.currentTime, (SHORT ? short.duration : DURATION) - 1 / 60)); requestAnimationFrame(loop); };
     loop();
   }
   window.ready = true;

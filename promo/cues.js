@@ -61,3 +61,24 @@ export const lyrics = [
   { text: "Kyiv, five a.m., and we're home", start: 22.0 },
 ];
 export const wordStep = 0.25;
+
+// The 11-second short (vertical): hard cuts on the beat through moments of the full film.
+// Each entry: [short time, source time, length].
+export const short = {
+  duration: 11,
+  edl: [
+    [0.0, 6.0, 1.5],    // out of the notch, the island grows wings
+    [1.5, 7.3, 1.5],    // hover → player
+    [3.0, 8.6, 1.0],    // volume
+    [4.0, 10.4, 1.5],   // YouTube Music tab → the notch
+    [5.5, 15.5, 1.5],   // full-screen player, lyrics
+    [7.0, 21.95, 1.5],  // timer, meeting, AirPods
+    [8.5, 31.75, 1.0],  // Free. Open source.
+    [9.5, 33.95, 1.5],  // the icon and the address
+  ],
+  hook: { text: ["POV:", "your", "MacBook's", "<em>notch</em>"], at: 0.08, out: 1.38 },
+};
+export const shortToSource = (t) => {
+  const seg = short.edl.filter(([s]) => s <= t + 1e-9).pop();
+  return seg[1] + (t - seg[0]);
+};

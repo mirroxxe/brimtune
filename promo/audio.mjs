@@ -4,9 +4,13 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { cue, lyrics, wordStep, DURATION } from "./cues.js";
+import { cue, lyrics, wordStep, DURATION, short } from "./cues.js";
 
-const SR = 48000, N = Math.round(DURATION * SR);
+// --short scores the 11-second short: its own music, and the film's sound effects moved through the edit list.
+const SHORT = process.argv.includes("--short");
+const DUR = SHORT ? short.duration : DURATION;
+
+const SR = 48000, N = Math.round(DUR * SR);
 const L = new Float32Array(N), R = new Float32Array(N);       // dry
 const RL = new Float32Array(N), RR = new Float32Array(N);     // reverb send
 const duckables = { L: new Float32Array(N), R: new Float32Array(N) }; // pad + bass, ducked by the kick
@@ -17,7 +21,11 @@ const hz = (m) => 440 * Math.pow(2, (m - 69) / 12);
 const TAU = Math.PI * 2;
 
 // Write a mono voice into the buses: fn(time since start) → sample.
+// While scoring the short, sound effects are written at the film's times and moved through the edit list.
+let remap = null;
+const throughEdl = (t) => { const seg = short.edl.find(([, src, len]) => t >= src - 1e-9 && t < src + len); return seg ? seg[0] + (t - seg[1]) : null; };
 function add(start, len, fn, { gain = 1, pan = 0, send = 0.2, bus = null } = {}) {
+  if (remap) { start = remap(start); if (start == null) return; }
   const a = Math.max(0, Math.round(start * SR)), b = Math.min(N, Math.round((start + len) * SR));
   const gl = gain * Math.cos((pan + 1) * Math.PI / 4), gr = gain * Math.sin((pan + 1) * Math.PI / 4);
   const dl = bus ? bus.L : L, dr = bus ? bus.R : R;
@@ -109,6 +117,31 @@ const tick = (s, g = 0.22, f = 2600, p = 0) => {
 const thump = (s, g = 0.5, f0 = 90) => { let ph = 0; add(s, 0.4, (t) => { ph += TAU * (f0 * (1 + Math.exp(-t * 20))) / SR; return Math.sin(ph) * Math.exp(-t * 9); }, { gain: g, send: 0.05 }); };
 const bloop = (s, f0, f1, g = 0.2) => { let ph = 0; add(s, 0.2, (t) => { ph += TAU * (f0 + (f1 - f0) * Math.min(1, t / 0.07)) / SR; return Math.sin(ph) * env(t, 0.004, 0.05); }, { gain: g, send: 0.25 }); };
 
+// ---------- music (short) ----------
+function scoreShort() {
+  const ch = [[0, 2, [53, 57, 60, 64, 67]], [2, 2, [50, 57, 60, 62, 65]], [4, 1.5, [46, 53, 57, 60, 62]], [5.5, 1.5, [43, 53, 58, 62, 65]],
+    [7, 1.5, [48, 55, 58, 62, 65]], [8.5, 1, [46, 53, 57, 62, 64]], [9.5, 1.5, [41, 53, 57, 60, 64, 67, 72]]];
+  for (const [st, len, notes] of ch) padChord(st, len, notes, { gain: st >= 9.5 ? 0.045 : 0.034, bright: st >= 9.5 ? 0.5 : 0.38 });
+  for (const [st, len, notes] of ch) if (st < 9.5) for (let b = 0; b < len - 0.01; b += 0.5) bass(st + b, 0.46, notes[0] - 12 + (b % 1 === 0.5 ? 12 : 0), 0.2);
+  for (let t = 0; t < 9.5 - 0.01; t += 0.25) {
+    const c = ch.filter(([st]) => st <= t + 1e-6).pop()[2], step = Math.round(t / 0.25), seq = [0, 2, 1, 3, 2, 4, 3, 1];
+    keys(t, c[seq[step % 8] % c.length] + 12, { gain: step % 4 === 0 ? 0.1 : 0.068, pan: step % 2 ? 0.3 : -0.3, dec: 0.4 });
+  }
+  for (let t = 0; t < 9.5 - 0.01; t += 0.5) {
+    const beat = Math.round(t / 0.5);
+    if (beat % 2 === 0) kick(t, 0.85); else clap(t, 0.27);
+    hat(t + 0.25, 0.07, 0.25); hat(t + 0.125, 0.035, -0.3); hat(t + 0.375, 0.035, -0.3);
+  }
+  // A lift on every cut, the lyric melody under the full screen, the big chord on the logo.
+  short.edl.slice(1, -1).forEach(([t]) => noise(t, 0.9, { center: () => 8000, q: 0.5, amp: (x) => Math.exp(-x * 4), gain: 0.05, send: 0.4 }));
+  [74, 77, 81, 79].forEach((m, k) => bell(6.0 + k * wordStep, m, { gain: 0.08, pan: (k - 1.5) * 0.1, dec: 0.5 }));
+  kick(9.5, 1);
+  { let ph = 0; add(9.5, 1.5, (x) => { ph += TAU * (30 + 30 * Math.exp(-x * 4)) / SR; return Math.sin(ph) * Math.exp(-x * 1.6); }, { gain: 0.4, send: 0.05 }); }
+  [65, 69, 72, 76, 79, 84].forEach((m, i) => bell(9.5 + i * 0.012, m, { gain: 0.07, pan: (i - 2.5) * 0.15, dec: 1.4, send: 0.6 }));
+  keys(9.5, 53, { gain: 0.14, dec: 1.4 }); keys(9.5, 60, { gain: 0.1, dec: 1.4 });
+}
+
+if (SHORT) scoreShort(); else {
 // ---------- music ----------
 // [start, length, voicing]; F major, two-bar phrases, a breakdown under the lyrics, a hush under "Barely there".
 const chords = [
@@ -188,7 +221,10 @@ hit(cue.end, 1.0);
 keys(cue.end, 53, { gain: 0.14, dec: 1.6 }); keys(cue.end, 60, { gain: 0.1, dec: 1.6 });
 [84, 88, 91, 96].forEach((m, i) => bell(cue.wordmark + i * 0.06, m, { gain: 0.035, pan: -0.4 + i * 0.27, dec: 0.6 }));
 
+}
+
 // ---------- sound design ----------
+if (SHORT) remap = throughEdl;
 const swell = (s, len, f0, f1, g, send = 0.4) => noise(s, len, { center: (t) => f0 + (f1 - f0) * (t / len) ** 2, q: 0.8, amp: (t) => (t / len) ** 1.6, gain: g, send });
 const whoosh = (s, len, from, to, g = 0.14, f = 6000) => sweepPan(s, len, from, to, { center: (t) => 700 + f * Math.sin(Math.PI * Math.min(1, t / len)), q: 1.1, amp: (t) => Math.sin(Math.PI * Math.min(1, t / len)) ** 1.5, gain: g, send: 0.3 });
 // Hook: the notch wakes, then drops into the icon.
@@ -239,6 +275,8 @@ bloop(cue.openSource, 500, 700, 0.08);
 tick(cue.download, 0.24, 2200, 0.1); marimba(cue.download + 0.06, 84, { gain: 0.1 }); marimba(cue.download + 0.14, 89, { gain: 0.1 });
 swell(cue.end - 0.4, 0.42, 400, 9000, 0.15);
 
+remap = null;
+
 // ---------- mix ----------
 // Kick ducks the pad and bass.
 for (let i = 0; i < N; i++) {
@@ -270,7 +308,7 @@ let peak = 0;
 const mixL = new Float32Array(N), mixR = new Float32Array(N);
 for (let i = 0; i < N; i++) {
   const t = i / SR;
-  const fade = t < 0.02 ? t / 0.02 : t > DURATION - 1.6 ? Math.pow(Math.max(0, (DURATION - t) / 1.6), 1.6) : 1;
+  const fade = t < 0.02 ? t / 0.02 : t > DUR - 1.3 ? Math.pow(Math.max(0, (DUR - t) / 1.3), 1.6) : 1;
   mixL[i] = Math.tanh((L[i] + wl[i] * 0.9) * 1.15) * fade;
   mixR[i] = Math.tanh((R[i] + wr[i] * 0.9) * 1.15) * fade;
   peak = Math.max(peak, Math.abs(mixL[i]), Math.abs(mixR[i]));
@@ -286,5 +324,5 @@ for (let i = 0; i < N; i++) {
 }
 const dir = path.join(path.dirname(fileURLToPath(import.meta.url)), "out");
 fs.mkdirSync(dir, { recursive: true });
-fs.writeFileSync(path.join(dir, "audio.wav"), pcm);
-console.log(`out/audio.wav  ${DURATION}s  peak before normalise ${peak.toFixed(2)}`);
+fs.writeFileSync(path.join(dir, SHORT ? "audio-short.wav" : "audio.wav"), pcm);
+console.log(`out/${SHORT ? "audio-short" : "audio"}.wav  ${DUR}s  peak before normalise ${peak.toFixed(2)}`);

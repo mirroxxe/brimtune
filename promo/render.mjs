@@ -3,7 +3,7 @@
 //   node render.mjs                 full render (needs out/audio.wav: node audio.mjs)
 //   node render.mjs --stills 1 2.4  PNG stills of those moments into out/stills/
 //   node render.mjs --from 5 --to 7 render only part (out/part.mp4), for checking a stretch
-//   add --vertical for the 1080×1920 cut (out/brimtune-promo-vertical.mp4)
+//   add --vertical for the 1080×1920 cut (out/brimtune-promo-vertical.mp4), --short for the 11 s short (out/brimtune-short.mp4)
 import http from "node:http";
 import fs from "node:fs";
 import path from "node:path";
@@ -11,7 +11,7 @@ import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import puppeteer from "puppeteer-core";
 import ffmpegPath from "ffmpeg-static";
-import { FPS, DURATION } from "./cues.js";
+import { FPS, DURATION, short } from "./cues.js";
 
 const dir = path.dirname(fileURLToPath(import.meta.url));
 const out = path.join(dir, "out");
@@ -20,7 +20,9 @@ const args = process.argv.slice(2);
 const opt = (name, def) => { const i = args.indexOf(name); return i < 0 ? def : args[i + 1]; };
 const SUB = Number(opt("--sub", 4));
 const WORKERS = Number(opt("--workers", 5));
-const VERT = args.includes("--vertical");
+const SHORT = args.includes("--short");
+const VERT = SHORT || args.includes("--vertical");
+const DUR = SHORT ? short.duration : DURATION;
 const [VW, VH] = VERT ? [1080, 1920] : [1920, 1080];
 const CHROME = process.env.CHROME || "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
 
@@ -32,7 +34,7 @@ const server = http.createServer((req, res) => {
   fs.createReadStream(file).pipe(res);
 });
 await new Promise((r) => server.listen(0, r));
-const url = `http://127.0.0.1:${server.address().port}/index.html${VERT ? "?vertical" : ""}`;
+const url = `http://127.0.0.1:${server.address().port}/index.html${SHORT ? "?short" : VERT ? "?vertical" : ""}`;
 
 const browser = await puppeteer.launch({
   executablePath: CHROME, headless: true,
@@ -64,7 +66,7 @@ function encoder(file, fps, extra = []) {
 
 if (args.includes("--stills")) {
   const times = args.slice(args.indexOf("--stills") + 1).filter((a) => !a.startsWith("--")).map(Number);
-  const stillDir = path.join(out, VERT ? "stills-v" : "stills");
+  const stillDir = path.join(out, SHORT ? "stills-s" : VERT ? "stills-v" : "stills");
   fs.mkdirSync(stillDir, { recursive: true });
   const page = await openPage();
   for (const t of times) {
@@ -74,7 +76,7 @@ if (args.includes("--stills")) {
   console.log(`stills → out/stills (${times.length})`);
 } else {
   const from = Math.round(Number(opt("--from", 0)) * FPS);
-  const to = Math.round(Number(opt("--to", DURATION)) * FPS);
+  const to = Math.round(Number(opt("--to", DUR)) * FPS);
   const frames = to - from;
   const chunk = Math.ceil(frames / WORKERS);
   const started = Date.now();
@@ -83,7 +85,7 @@ if (args.includes("--stills")) {
   await Promise.all(Array.from({ length: WORKERS }, async (_, w) => {
     const a = from + w * chunk, b = Math.min(to, a + chunk);
     if (a >= b) return;
-    const seg = path.join(out, `seg${VERT ? "v" : ""}${w}.mkv`);
+    const seg = path.join(out, `seg${SHORT ? "s" : VERT ? "v" : ""}${w}.mkv`);
     segs[w] = seg;
     const page = await openPage();
     const enc = encoder(seg, FPS, ["-c:v", "ffv1", "-pix_fmt", "bgr0"]);
@@ -97,11 +99,11 @@ if (args.includes("--stills")) {
     await enc.end();
     await page.close();
   }));
-  const list = path.join(out, VERT ? "segs-v.txt" : "segs.txt");
+  const list = path.join(out, SHORT ? "segs-s.txt" : VERT ? "segs-v.txt" : "segs.txt");
   fs.writeFileSync(list, segs.filter(Boolean).map((s) => `file '${s}'`).join("\n"));
-  const full = from === 0 && to === Math.round(DURATION * FPS);
-  const target = path.join(out, (full ? "brimtune-promo" : "part") + (VERT ? "-vertical" : "") + ".mp4");
-  const audio = path.join(out, "audio.wav");
+  const full = from === 0 && to === Math.round(DUR * FPS);
+  const target = path.join(out, (full ? (SHORT ? "brimtune-short" : "brimtune-promo") : "part") + (SHORT ? "" : VERT ? "-vertical" : "") + ".mp4");
+  const audio = path.join(out, SHORT ? "audio-short.wav" : "audio.wav");
   const withAudio = fs.existsSync(audio);
   const ff = spawn(ffmpegPath, ["-y", "-loglevel", "error", "-f", "concat", "-safe", "0", "-i", list,
     ...(withAudio ? ["-ss", String(from / FPS), "-t", String(frames / FPS), "-i", audio] : []),

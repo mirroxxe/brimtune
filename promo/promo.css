@@ -402,3 +402,5 @@ svg.ln { fill: none !important; stroke: currentColor; stroke-width: 2; stroke-li
 .v #word { top: 1050px; font-size: 150px; }
 .v #url { top: 1240px; font-size: 42px; }
 .v #badges { top: 1340px; }
+#shortcap { position: absolute; left: 70px; right: 70px; top: 230px; text-align: center; font: 800 136px/1.02 var(--display); letter-spacing: -.045em; color: var(--moon); text-shadow: 0 10px 40px rgba(0,0,0,.5); }
+#shortcap em { color: color-mix(in srgb, var(--a1) 35%, white); }
